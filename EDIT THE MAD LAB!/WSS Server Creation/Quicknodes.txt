@@ -1,0 +1,72 @@
+You can have your own madlab server in seconds for free
+If the defaults are not working or you just want your own!
+
+You may use the ripple wss or mad lab wss or one you make!
+You can also set up a rippled server locally and run off that!! 
+
+Wow :D
+
+Go to : https://www.quicknode.com
+Make an account. / Verify account email things :P
+Create an endpoint - free
+Select XRP / Mainnet
+After selecting main-net and proceeding -
+Make sure to select your payment model when it pops up - free does work for single user!
+You should NOT need any added support/buy options just select the free plan
+Select plan, continue lower right button.
+
+Purchase summary
+
+Edit
+Free plan
+$0.00
+/month
+10M
+API Credits
+15
+Requests /sec
+Streams
+5 GB included
+Functions
+250 GB-s
+1 endpoint
+1 real-time alert
+Community support
+
+Terms agree
+Continue...
+
+Ok now the wss endpoint is made and can be stats tracked in the UI - It can be used
+in the mad lab as an endpoint for you personally! Just add it to the wss endpoints in index.html
+This will allow you to select it when the page is loaded - now you are 100% on your own code+node.
+
+Copy the wss box, add it to madlab - super simple!
+
+Consider upgrading, or supporting the main node the mad lab runs via a donation in the send tx section.
+
+Good luck out there mad lads! - ClassyXoge
+
+
+
+inside index.html find : 
+
+<div class="section-content">
+<select id="wss-server">      FIND THE WSS SERVER SETTINGS AREA
+<option value="wss://bold-nameless-theorem.xrp-mainnet.quiknode.pro/18a6ef4d73ae74bbe1ebaac14ed720eb5460c1e6/">Xoge MadLab Net</option>
+<option value="ws://192.168.0.44:6005">fafo</option>
+<option value="wss://s1.ripple.com">Ripple Server 1</option>
+<option value="wss://s2.ripple.com">Ripple Server 2</option>
+<option value="PASTE YOUR STUFF HERE">NAME IT SOMETHING COOL HERE</option>
+</select>
+<div class="button-group">
+<button class="green-btn" onclick="connectWebSocket()">Connect</button>
+<button class="red-black-btn" onclick="disconnectWebSocket()">Disconnect</button>
+</div>
+<p>Status: <span id="connection-status">Disconnected</span></p>
+</div>
+
+If at any time servers are not working you can replace them/remove them and continue on.
+Random server is selected at start by default mad lab code.
+You can remove all servers other than yours and it will use yours only!
+The addresses for the ripple servers can be found online easily
+The default mad lab comes with all of this as well as mad labs own wss servers.

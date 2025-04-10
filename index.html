@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Mad Lab</title>
+    <link rel="stylesheet" href="Styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/xrpl@4.2.0/build/xrpl-latest-min.min.js"></script>
+    <script src="js/qrcode.min.js"></script>
+    <script src="js/argon2-bundled.min.js"></script>
+    <script src="js/argon2cypher.js"></script>
+</head>
+<body>
+    <div class="container">
+        
+        <div class="sidebar-left-container">
+            <div class="sidebar-left" id="account-overview">
+                <div class="section-header" onclick="toggleSection('account-overview')">
+                    <h2>Account Overview</h2>
+                    <button class="toggle-btn">▼</button>
+                </div>
+                <div class="section-content">
+                    <p id="account-address">Address: -</p>
+                    <div class="asset-grid" id="asset-grid"></div>
+                </div>
+            </div>
+			<div class="emergency-clear-container">
+            <button class="red-black-btn emergency-btn" id="emergency-clear-queue" onclick="emergencyClearQueue()">☢️☢️Emergency Clear Queue☢️☢️</button>
+			<hr class="divider-line">
+			<button class="red-black-btn emergency-btn" onclick="resetAllWalletData()">Clean Out All Wallet Data From The Lab</button>
+			</div>
+        </div>
+
+        <div class="sidebar-right-container">
+            <div class="sidebar-right" id="connection-details">
+                <div class="section-header" onclick="toggleSection('connection-details')">
+                    <h2>Connection Details</h2>
+                    <button class="toggle-btn">▼</button>
+                </div>
+                <div class="section-content">
+                    <select id="wss-server">
+                        <option value="wss://bold-nameless-theorem.xrp-mainnet.quiknode.pro/18a6ef4d73ae74bbe1ebaac14ed720eb5460c1e6/">Xoge MadLab Net 1</option>
+                        <option value="wss://red-alien-sheet.xrp-mainnet.quiknode.pro/e94ba53bef6b2794664278cdf61c1f12a201dd0b/">Xoge MadLab Net 2</option>
+                        <option value="wss://s1.ripple.com">Ripple Server 1</option>
+                        <option value="wss://s2.ripple.com">Ripple Server 2</option>
+                    </select>
+                    <div class="button-group">
+                        <button class="green-btn" onclick="connectWebSocket()">Connect</button>
+                        <button class="red-black-btn" onclick="disconnectWebSocket()">Disconnect</button>
+                    </div>
+                    <p>Status: <span id="connection-status">Disconnected</span></p>
+                </div>
+            </div>
+
+            <div class="sidebar-right" id="output-container">
+                <div class="section-header" onclick="toggleSection('output-container')">
+                    <h2>Output</h2>
+                    <button class="toggle-btn">▼</button>
+                </div>
+                <div class="section-content">
+                    <div class="output-box" id="output"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="header">
+            <h1>🧪 The Mad Lab 🧪</h1>
+            <nav class="nav-bar">
+                <a href="#wallet-management" onclick="expandSection('wallet-management')">Wallet Management</a>
+                <a href="#send-transactions" onclick="expandSection('send-transactions')">Send Transactions</a>
+                <a href="#amm-swap" onclick="expandSection('amm-swap')">AMM Swap</a>
+                <a href="#trustline-management" onclick="expandSection('trustline-management')">Trustline Management</a>
+                <a href="#domain-management" onclick="expandSection('domain-management')">Domain Management</a>
+                <a href="#account-deletion" onclick="expandSection('account-deletion')">Account Deletion</a>
+                <a href="#set-regular-key" onclick="expandSection('set-regular-key')">Set Regular Key</a>
+                <a href="#network-stats" onclick="expandSection('network-stats')">Network Stats</a>
+            </nav>
+        </div>
+
+        <img src="science.jfif" alt="Science Image" class="science-image">
+
+        <div class="welcome-overlay" id="welcomePopup">
+            <div class="welcome-content">
+                <h2>🧪 Welcome to The Mad Lab 🧪</h2>
+                <p>The Mad Lab is a powerful tool for managing XRPL wallets, sending transactions, performing AMM swaps, managing trustlines, and more. Please read the disclaimer carefully before proceeding to ensure safe usage.</p>
+                <button class="green-btn" onclick="closeWelcomePopup()">I Understand</button>
+            </div>
+        </div>
+
+        <div class="disclaimer-overlay" id="disclaimerPopup">
+            <div class="disclaimer-content">
+                <h2>Disclaimer</h2>
+                <p>This tool signs transactions locally in your browser using your seed. When running on localhost, your seed never leaves your device, ensuring maximum security. However, if hosted online (even with HTTPS), risks include exposure to malicious extensions, compromised environments, or network interception. I strongly recommend running it locally on a secure machine.</p>
+                <p>The mad lab was made for the mad lads, of Xoge by @ClassyXoge on X.com. Though anyone may use it for free, no terms, do whatever you want.</p>
+                <p>This mad lab is beta, I expect to see some annoying minor bugs - not major ones. Though the use of it is at your own risk, you have the code - it's your lab now.</p>
+                <p>The budget for mad lab was $0 - The team was a one silly red panda, Don't expect the world, use caution - You assume all risk in it's use.</p>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="gratitude-checkbox">
+                    <label for="gratitude-checkbox">I am aware this is my own risk fully in using my own mad lab</label>
+                </div>
+                <button id="accept-disclaimer-btn" class="green-btn" disabled>I Accept</button>
+            </div>
+        </div>
+
+        <div class="password-modal-overlay" id="passwordModal" style="display: none;">
+            <div class="password-modal-content">
+                <h2>Enter Passwords</h2>
+                <p>Enter two passwords to encrypt/decrypt your wallet file.</p>
+                <div class="password-field">
+                    <label for="password1">First Password:</label>
+                    <div class="password-input-container">
+                        <input type="password" id="password1" placeholder="Enter first password">
+                        <button type="button" class="toggle-password" onclick="togglePasswordVisibility('password1', this)">Show</button>
+                    </div>
+                </div>
+                <div class="password-field">
+                    <label for="password2">Second Password:</label>
+                    <div class="password-input-container">
+                        <input type="password" id="password2" placeholder="Enter second password">
+                        <button type="button" class="toggle-password" onclick="togglePasswordVisibility('password2', this)">Show</button>
+                    </div>
+                </div>
+                <div class="modal-buttons">
+                    <button class="green-btn" id="submitPasswords">Submit</button>
+                    <button class="red-black-btn" onclick="closePasswordModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="wallet-management">
+            <div class="section-header" onclick="toggleSection('wallet-management')">
+                <h2>Wallet Management</h2>
+                <button class="toggle-btn">▼</button>
+            </div>
+            <div class="section-content">
+                <div class="section-description">
+                    <h3 style="color: #00cc00;">Wallet Management Overview</h3>
+                    <p>Create, load, and save XRPL wallets securely. Generate new wallets, enter seeds manually, or load/save encrypted files. Unencrypted wallets are for recovery only—encrypt for regular use.</p>
+                </div>
+                <div class="password-input-container">
+                    <input type="text" id="seed" placeholder="Enter Seed Phrase or Leave Blank to Generate">
+                </div>
+                <div class="password-input-container">
+                    <input type="password" id="address" placeholder="Enter XRPL Address" readonly>
+                    <button type="button" class="toggle-password" onclick="togglePasswordVisibility('address', this)">Show</button>
+                </div>
+                <button class="red-black-btn" onclick="checkBalance()">Check Balance</button>
+                <button class="red-black-btn" onclick="createWallet()">Create New Wallet</button>
+                <div class="custom-file-input">
+                    <button class="nav-link-btn" id="load-wallet-btn" onclick="document.getElementById('walletFile').click()">Load Encrypted Wallet</button>
+                    <input type="file" id="walletFile" accept=".json" onchange="i9(event)" style="display: none;">
+                    <span id="fileName" class="file-name">No file chosen</span>
+                </div>
+                <div class="custom-file-input">
+				<button class="red-black-btn" id="load-unencrypted-wallet-btn">Load Unencrypted Wallet</button>
+				<input type="file" id="unencryptedWalletFile" accept=".json" onchange="loadUnencryptedWalletFile(event)" style="display: none;">
+				<span id="unencryptedFileName" class="file-name">No file chosen</span>
+				</div>
+                <button class="red-black-btn" onclick="saveWalletFile()">Save Wallet</button>
+                <p id="address-error" class="error-message"></p>
+                <div id="wallet-warning" class="wallet-warning" style="display: none;"></div>
+            </div>
+        </div>
+
+        <div class="section minimized" id="send-transactions">
+            <div class="section-header" onclick="toggleSection('send-transactions')">
+                <h2>Send Transactions</h2>
+                <button class="toggle-btn">▼</button>
+            </div>
+            <div class="section-content">
+                <div class="section-description">
+                    <h3 style="color: #00cc00;">Send Transactions Overview</h3>
+                    <p>Send XRP or tokens to any XRPL address. Specify asset, amount, destination, and optional memo. Schedule transactions or use "Mega Send x5" to queue five times.</p>
+                </div>
+                <hr class="divider-line">
+                <div class="transaction-options">
+                    <h3>Transaction Details</h3>
+                    <div class="input-group">
+                        <label for="send-asset-select">Asset to Send:</label>
+                        <select id="send-asset-select" onchange="selectSendAsset()"></select>
+                    </div>
+                    <div class="input-group">
+                        <label for="send-destination">Destination Address:</label>
+                        <input type="text" id="send-destination" placeholder="Destination Address (e.g., r...)">
+                    </div>
+                    <div class="input-group">
+                        <label for="send-amount">Amount:</label>
+                        <input type="text" id="send-amount" placeholder="Amount (e.g., 200 or 1.134891)">
+                    </div>
+                    <div class="input-group">
+                        <label for="send-memo">Memo (Optional):</label>
+                        <input type="text" id="send-memo" placeholder="Memo (optional)">
+                    </div>
+                    <div class="token-row">
+                        <input type="checkbox" id="schedule-tx-transactions" onchange="toggleScheduleOptions('schedule-tx-transactions', 'schedule-delay-transactions')">
+                        <label for="schedule-tx-transactions">Schedule Transaction</label>
+                        <input type="number" id="schedule-delay-transactions" placeholder="Delay (minutes)" disabled>
+                    </div>
+                    <div class="button-group">
+					<button class="red-black-btn" id="send-tx-btn">Send</button>
+					<button class="red-black-btn" id="mega-send-btn" onclick="queueMegaTransaction()">Mega Send x5</button>
+					</div>
+                    <p class="donation-text">
+                        The Mad Lab is free, will remain free forever. You may choose to donate if you feel like it. 
+                        <a href="#" class="address-link" onclick="populateDonation('rnzr1LEkDktS4N9zccNQZtMZxfWrTz4RHw'); return false;">Click Here</a> 
+                        
+                    </p>
+                    <p id="address-error-transactions" class="error-message"></p>
+                    <div id="transaction-queue-transactions" class="transaction-queue">
+                        <p>Transaction Queue:</p>
+                        <p>No transactions in queue.</p>
+                    </div>
+                </div>
+                <hr class="divider-line">
+                <div class="nuke-trustline">
+                    <h3>☢️ Nuke Trustline Zone ☢️</h3>
+                    <p class="instruction-text nuke-warning">
+                        💥 <strong>DANGER:</strong> Removes trustlines by sending all balances to the issuer and setting the limit to 0. Ideal for tiny balances. <strong>XRP cannot be nuked.</strong> Use cautiously!
+                    </p>
+                    <div class="input-group">
+                        <label for="nuke-asset-select">Trustline Asset to Nuke:</label>
+                        <select id="nuke-asset-select" onchange="updateNukeAssetDetails()"></select>
+                    </div>
+                    <p id="nuke-asset-balance" class="instruction-text">Current Balance: -</p>
+                    <button class="red-black-btn nuke-btn" onclick="queueNukeTrustline()">💥 Nuke Trustline 💥</button>
+                    <p id="address-error-nuke" class="error-message"></p>
+                </div>
+            </div>
+        </div>
+		
+        <div class="section minimized" id="amm-swap">
+            <div class="section-header" onclick="toggleSection('amm-swap')">
+                <h2>AMM Swap</h2>
+                <button class="toggle-btn">▼</button>
+            </div>
+            <div class="section-content">
+                <div class="section-description">
+                    <h3 style="color: #00cc00;">AMM Swap Overview</h3>
+                    <p>Swap XRP for tokens or vice versa via XRPL’s AMM. Check pool prices, set slippage, and use the balance slider for precision.</p>
+                </div>
+                <hr class="divider-line">
+                <div class="swap-tokens">
+                    <h3>Swap Tokens</h3>
+                    <div class="account-overview">
+                        <div class="swap-field">
+                            <label>Input Asset:</label>
+                            <select id="swap-input-asset" onchange="updateSwapDirection()"></select>
+                            <p id="input-balance">Balance: -</p>
+                        </div>
+                        <div class="swap-arrow">↓</div>
+                        <div class="swap-field">
+                            <label>Output Asset:</label>
+                            <select id="swap-output-asset" onchange="updateSwapDirection()"></select>
+                            <p id="output-balance">Balance: -</p>
+                        </div>
+                        <div id="pool-info" class="swap-info">
+                            <p>Pool Reserves: -</p>
+                            <p>Pool Price: -</p>
+                            <p>Pool Fee: -</p>
+                        </div>
+                        <div class="swap-field">
+                            <label>Amount to Swap:</label>
+                            <input type="text" id="swap-amount" placeholder="Amount to Swap" oninput="updateSliderFromAmount()">
+                        </div>
+                        <div class="swap-field">
+                            <label>Expected Output:</label>
+                            <input type="text" id="swap-output-amount" readonly>
+                        </div>
+                        <div class="swap-field">
+                            <label>Balance Slider (0-100%):</label>
+                            <input type="range" id="swap-balance-slider" min="0" max="100" value="0" oninput="debouncedUpdateSwapAmounts()">
+                            <span id="slider-percentage">0%</span>
+                        </div>
+                        <div class="swap-field">
+                            <label>Slippage Tolerance (%):</label>
+                            <input type="text" id="swap-slippage" placeholder="Slippage Tolerance (%)" value="1">
+                        </div>
+                        <div id="swap-result" class="swap-result">
+                            <p>Swap Result: -</p>
+                        </div>
+                        <div class="button-group">
+                            <button class="red-black-btn" onclick="checkPoolPrice()">Check Pool Price</button>
+                            <button class="red-black-btn" onclick="queueSwapTransaction()">Execute Swap</button>
+                            <select id="chart-dropdown" onchange="openChartFromDropdown(this)">
+                                <option value="">Select Chart</option>
+                                <option value="https://www.tradingview.com/symbols/XRPUSD/">XRP Chart</option>
+                                <option value="https://dexscreener.com/xrpl/586f676500000000000000000000000000000000.rjmtvf5b3gbufmrqybh5wyvxeh4qe8vyu1_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">Xoge Chart</option>
+                                <option value="https://dexscreener.com/xrpl/416e7469536f6c00000000000000000000000000.rn3dkqno4t4vxte9dbhzxqyjtkvmcapdya_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">AntiSol Chart</option>
+                                <option value="https://dexscreener.com/xrpl/524c555344000000000000000000000000000000.rmxckbedwqr76quhesumdegf4b9xj8m5de_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">RLUSD Chart</option>
+                                <option value="https://dexscreener.com/xrpl/5055505500000000000000000000000000000000.r4wfqr5dq7pwpvvjv8gism5cqblgtnnvk8_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">PUPU Chart</option>
+                                <option value="https://dexscreener.com/xrpl/446f6f6400000000000000000000000000000000.rn5y9n8aptrc7pvqxdmjk9qvfw7fwi4kc_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">Dood Chart</option>
+                                <option value="https://dexscreener.com/xrpl/3352444559450000000000000000000000000000.rhjbqfm5oqvxu1sowtatc4r1v6gbnhcqq_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">3RDEYE Chart</option>
+                                <option value="https://dexscreener.com/xrpl/46574f4758525000000000000000000000000000.rnm3vnjj2pcmqfvdrpdr6n73uetz32hfi_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">FWOGXRP Chart</option>
+                                <option value="https://dexscreener.com/xrpl/4772696e64000000000000000000000000000000.rso9qvhn2mbctn2s8fuyg4w1tvxk2oqz7r_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">Grind Chart</option>
+                                <option value="https://dexscreener.com/xrpl/4449414d4f4e4400000000000000000000000000.rg2mbhzydqysuhktbwm5fkd4nutuvkeqfh_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">DIAMOND Chart</option>
+                                <option value="https://dexscreener.com/xrpl/4841494300000000000000000000000000000000.rsexqmhtkdfgzncfj25xtb9zy8jaytv7n3_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">HAIC Chart</option>
+                            </select>
+                        </div>
+                        <p id="address-error-amm" class="error-message"></p>
+                        <div id="transaction-queue-amm" class="transaction-queue">
+                            <p>Transaction Queue:</p>
+                            <p>No transactions in queue.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+			
+			
+			<hr class="divider-line">
+
+<div class="lp-management">
+    <h3>Liquidity Pool Management</h3>
+    <p class="section-description">Control your stake in XRPL AMM pools—deposit assets, withdraw your share, or vote on trading fees.</p>
+
+
+    <div class="lp-asset-selection">
+        <div class="input-group">
+            <label for="lp-asset1">Asset 1:</label>
+            <select id="lp-asset1"></select>
+        </div>
+        <div class="input-group">
+            <label for="lp-asset2">Asset 2:</label>
+            <select id="lp-asset2"></select>
+        </div>
+        <button class="red-black-btn">Check Pool</button>
+    </div>
+
+    <div id="lp-info" class="swap-info">
+        <p>Pool Status: -</p>
+        <p>Your LP Tokens: -</p>
+        <p>Pool Assets: -</p>
+        <p>Trading Fee: -</p>
+    </div>
+
+    <div class="lp-subsection" id="lp-deposit">
+        <div class="lp-subsection-header" onclick="toggleLPSection('lp-deposit')">
+            <h4>Deposit to Pool</h4>
+            <button class="toggle-btn">▼</button>
+        </div>
+        <div class="lp-subsection-content">
+            <p class="lp-description">Add assets to the liquidity pool to earn trading fees.</p>
+            <div class="input-group">
+                <label for="lp-amount1-deposit">Amount 1:</label>
+                <input type="text" id="lp-amount1-deposit" placeholder="Amount of Asset 1">
+                <input type="range" id="lp-amount1-slider-deposit" min="0" max="100" value="0">
+                <span id="lp-amount1-percentage-deposit">0%</span>
+            </div>
+            <div class="input-group">
+                <label for="lp-amount2-deposit">Amount 2 (Optional):</label>
+                <input type="text" id="lp-amount2-deposit" placeholder="Amount of Asset 2">
+                <input type="range" id="lp-amount2-slider-deposit" min="0" max="100" value="0">
+                <span id="lp-amount2-percentage-deposit">0%</span>
+            </div>
+            <button class="red-black-btn lp-action-btn" onclick="queueLPDeposit()">Deposit</button>
+        </div>
+    </div>
+
+		<div class="lp-subsection" id="lp-withdraw">
+			<div class="lp-subsection-header" onclick="toggleLPSection('lp-withdraw')">
+				<h4>Withdraw from Pool</h4>
+				<button class="toggle-btn">▼</button>
+			</div>
+			<div class="lp-subsection-content">
+				<p class="lp-description">Remove your share from the pool. Adjust the slider to set the number of LP tokens to withdraw. The pool will return assets in a balanced 50/50 value split.</p>
+				<div class="input-group">
+					<label for="lp-amount-withdraw">LP Tokens to Withdraw:</label>
+					<input type="text" id="lp-amount-withdraw" placeholder="0" readonly>
+				</div>
+				<div class="input-group">
+					<label for="lp-withdraw-slider">Withdraw Percentage:</label>
+					<input type="range" id="lp-withdraw-slider" min="0" max="100" value="0">
+					<span id="lp-withdraw-percentage">0%</span>
+				</div>
+				<button class="red-black-btn lp-action-btn" onclick="queueLPWithdraw()">Withdraw</button>
+			</div>
+		</div>
+
+    <div class="lp-subsection" id="lp-vote">
+        <div class="lp-subsection-header" onclick="toggleLPSection('lp-vote')">
+            <h4>Vote on Trading Fee</h4>
+            <button class="toggle-btn">▼</button>
+        </div>
+        <div class="lp-subsection-content">
+            <p class="lp-description">Influence the pool’s trading fee (0-1%) as an LP token holder.</p>
+            <div class="input-group">
+                <label for="lp-vote-fee">Trading Fee (0-1%):</label>
+                <input type="text" id="lp-vote-fee" placeholder="e.g., 0.6">
+            </div>
+            <div class="input-group">
+                <label for="lp-vote-fee-slider">Fee Slider (0.01% to 1%):</label>
+                <input type="range" id="lp-vote-fee-slider" min="0" max="100" value="0">
+                <span id="lp-vote-fee-percentage">0%</span>
+            </div>
+            <button class="red-black-btn lp-action-btn" onclick="queueLPVote()">Vote Fee</button>
+        </div>
+    </div>
+
+		<p id="address-error-lp" class="error-message"></p>
+		<div id="lp-queue" class="transaction-queue">
+			<p>Transaction Queue:</p>
+			<p>No transactions in queue.</p>
+				</div>
+			</div>
+		</div>
+
+        <div class="section minimized" id="trustline-management">
+            <div class="section-header" onclick="toggleSection('trustline-management')">
+                <h2>Trustline Management</h2>
+                <button class="toggle-btn">▼</button>
+            </div>
+            <div class="section-content">
+                <div class="section-description">
+                    <h3 style="color: #00cc00;">Trustline Management Overview</h3>
+                    <p>You may use this tool to add/remove trustlines or nuke trustlines to remove them with trash on the line. This tool is designed to handle dynamic assets - Once you manually add an issuer and hex by putting the data in the boxes it will add the assets to your default dropdowns across the site. Add Issuer/Hex and set trustline, this will add unkown assets to the site and your wallet. Hex can be found on Xrpscan.com on issued tokens tab of the issuer account.</p>
+                </div>
+                <div class="trustline-controls">
+                    <select id="trust-asset-select" onchange="selectTrustAsset()"></select>
+                    <input type="text" id="trust-issuer" placeholder="Issuer Address (e.g., r...)">
+                    <input type="text" id="trust-currency" placeholder="Currency Hex Code">
+                    <p id="current-trust-limit" class="current-trust-limit"></p>
+                    <input type="text" id="trust-limit" placeholder="Trustline Limit (e.g., 1000000000000000)">
+                    <div class="token-row">
+                        <input type="checkbox" id="schedule-tx-trustlines" onchange="toggleScheduleOptions('schedule-tx-trustlines', 'schedule-delay-trustlines')">
+                        <label for="schedule-tx-trustlines">Schedule Transaction</label>
+                        <input type="number" id="schedule-delay-trustlines" placeholder="Delay (minutes)" disabled>
+                    </div>
+                    <p class="instruction-text">Note: Setting limit to 0 locks tokens in stasis; undo by resetting limit.</p>
+                </div>
+                <div class="button-group">
+                    <button class="red-black-btn" onclick="queueTrustlineTransaction()">Set Trustline</button>
+                    <button class="red-black-btn" onclick="closeTrustline()">Close Trustline</button>
+                </div>
+                <p id="address-error-trustlines" class="error-message"></p>
+                <div id="trustline-queue" class="transaction-queue">
+                    <p>Transaction Queue:</p>
+                    <p>No transactions in queue.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section minimized" id="domain-management">
+            <div class="section-header" onclick="toggleSection('domain-management')">
+                <h2>Domain Management</h2>
+                <button class="toggle-btn">▼</button>
+            </div>
+            <div class="section-content">
+                <div class="section-description">
+                    <h3 style="color: #00cc00;">Domain Management Overview</h3>
+                    <p>Link your XRPL account to a domain. Set or remove it, ensuring an xrp-ledger.toml file verifies ownership.</p>
+                </div>
+                <div class="domain-controls">
+                    <p id="current-domain" class="current-domain">Current Domain: None</p>
+                    <input type="text" id="domain-input" placeholder="Enter Domain (e.g., example.com)">
+                    <div class="token-row">
+                        <input type="checkbox" id="schedule-tx-domain" onchange="toggleScheduleOptions('schedule-tx-domain', 'schedule-delay-domain')">
+                        <label for="schedule-tx-domain">Schedule Transaction</label>
+                        <input type="number" id="schedule-delay-domain" placeholder="Delay (minutes)" disabled>
+                    </div>
+                    <p class="instruction-text">Note: Host xrp-ledger.toml at the domain. Leave blank to remove.</p>
+                </div>
+                <div class="button-group">
+                    <button class="red-black-btn" onclick="queueDomainTransaction()">Set Domain</button>
+                    <button class="red-black-btn" onclick="removeDomain()">Remove Domain</button>
+                    <button class="red-black-btn" onclick="fetchDomain()">Fetch Current Domain</button>
+                </div>
+                <p id="address-error-domain" class="error-message"></p>
+                <div id="domain-queue" class="transaction-queue">
+                    <p>Transaction Queue:</p>
+                    <p>No transactions in queue.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section minimized" id="account-deletion">
+            <div class="section-header" onclick="toggleSection('account-deletion')">
+                <h2>Account Deletion</h2>
+                <button class="toggle-btn">▼</button>
+            </div>
+            <div class="section-content">
+                <div class="section-description">
+                    <h3 style="color: #00cc00;">Account Deletion Overview</h3>
+                    <p>Delete an XRPL account and recover reserve XRP (minus fees) to a destination address. Ensure deletion criteria are met.</p>
+                </div>
+                <div class="account-deletion-controls">
+                    <p id="account-state" class="account-state">Account State: Unknown (Click "Check Account State")</p>
+                    <input type="text" id="delete-destination" placeholder="Destination Address (e.g., r...)">
+                    <div class="token-row">
+                        <input type="checkbox" id="schedule-tx-deletion" onchange="toggleScheduleOptions('schedule-tx-deletion', 'schedule-delay-deletion')">
+                        <label for="schedule-tx-deletion">Schedule Transaction</label>
+                        <input type="number" id="schedule-delay-deletion" placeholder="Delay (minutes)" disabled>
+                    </div>
+                    <p class="instruction-text" style="color: #ff4444; font-weight: bold;">WARNING: Deletion is irreversible. Clear all objects and ensure sufficient balance.</p>
+                    <p class="instruction-text" style="color: #ffaa00; font-weight: bold;">Note: Fee is 0.2 XRP; recovers 1 XRP base + 0.2 XRP per trustline.</p>
+                    <p class="instruction-text" style="color: #ffaa00; font-weight: bold;">Tip: Minimize funds first, leaving ~1.2 XRP for no trustlines.</p>
+                    <p class="instruction-text">Best Practice: Use tags instead of new accounts to reduce ledger size.</p>
+                </div>
+                <div class="button-group">
+                    <button class="red-black-btn" onclick="checkAccountState()">Check Account State</button>
+                    <button class="red-black-btn" onclick="queueAccountDeleteTransaction()">Delete Account</button>
+                </div>
+                <p id="address-error-deletion" class="error-message"></p>
+                <div id="deletion-queue" class="transaction-queue">
+                    <p>Transaction Queue:</p>
+                    <p>No transactions in queue.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section minimized" id="set-regular-key">
+            <div class="section-header" onclick="toggleSection('set-regular-key')">
+                <h2>Set Regular Key</h2>
+                <button class="toggle-btn">▼</button>
+            </div>
+            <div class="section-content">
+                <div class="section-description">
+                    <h3 style="color: #00cc00;">Set Regular Key Overview</h3>
+                    <p>Assign a regular key for signing transactions instead of the master key. Set or remove it with scheduling options.</p>
+                </div>
+                <hr class="divider-line">
+                <div class="regular-key-controls">
+                    <h3>Current Regular Key</h3>
+                    <p id="current-regular-key" class="current-regular-key">Current Regular Key: None</p>
+                    <input type="text" id="regular-key-address" placeholder="Regular Key Address (e.g., r...)">
+                    <div class="token-row">
+                        <input type="checkbox" id="schedule-tx-regular-key" onchange="toggleScheduleOptions('schedule-tx-regular-key', 'schedule-delay-regular-key')">
+                        <label for="schedule-tx-regular-key">Schedule Transaction</label>
+                        <input type="number" id="schedule-delay-regular-key" placeholder="Delay (minutes)" disabled>
+                    </div>
+                    <p class="instruction-text">Note: Enter address to set; leave blank to remove.</p>
+                    <div class="button-group">
+                        <button class="red-black-btn" onclick="queueSetRegularKey()">Set Regular Key</button>
+                        <button class="red-black-btn" onclick="fetchRegularKey()">Fetch Regular Key</button>
+                    </div>
+                </div>
+                <p id="address-error-regular-key" class="error-message"></p>
+                <div id="regular-key-queue" class="transaction-queue">
+                    <p>Transaction Queue:</p>
+                    <p>No transactions in queue.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section minimized" id="network-stats">
+            <div class="section-header" onclick="toggleSection('network-stats')">
+                <h2>Network Stats</h2>
+                <button class="toggle-btn">▼</button>
+            </div>
+            <div class="section-content">
+                <div class="section-description">
+                    <h3 style="color: #00cc00;">Network Stats Overview</h3>
+                    <p>Data offers clues, not certainties. Avoid assumptions as it’s imperfect and varies by account. Useful for exploration or curiosity.</p>
+                </div>
+                <hr class="divider-line">
+                <div class="network-stats-controls">
+                    <h3>Ledger Pulse</h3>
+                    <div id="ledger-stats" class="ledger-stats-box">
+                        <p>Current Ledger: <span id="ledger-index">-</span></p>
+                        <p>Last Sync: <span id="ledger-close-time">-</span></p>
+                    </div>
+                    <button class="red-black-btn" onclick="fetchNetworkStats()">Fetch Ledger Pulse</button>
+                </div>
+                <hr class="divider-line">
+                <div class="network-stats-controls">
+                    <h3>Deep Dive</h3>
+                    <input type="text" id="deep-dive-address" placeholder="Enter XRPL Address (e.g., r...)">
+                    <div class="button-group">
+                        <button class="red-black-btn" onclick="deepDiveAccount()">Deep Dive</button>
+                        <button class="red-black-btn" id="stop-deep-dive" onclick="stopDeepDive()" disabled>Stop</button>
+                    </div>
+                    <div id="deep-dive-results">
+                        <div id="deep-dive-core" class="deep-dive-box">
+                            <h4>Core Profile</h4>
+                            <p>No data available.</p>
+                        </div>
+                        <div id="deep-dive-assets" class="deep-dive-box">
+                            <h4>Assets</h4>
+                            <div class="content">
+                                <p>No data available.</p>
+                            </div>
+                        </div>
+                        <div id="deep-dive-tx" class="deep-dive-box">
+                            <h4>Transaction History</h4>
+                            <div class="content">
+                                <p>No data available.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>By using this page, you confirm reading the disclaimer at <a href="index.html">index.html</a>. If not, please do so for safe usage.</p>
+        </footer>
+    </div>
+
+    <script src="script.js?v=5"></script>
+	<script src="extendedscripts.js?v=5"></script>
+	<script src="lp.js"></script>
+</body>
+</html>

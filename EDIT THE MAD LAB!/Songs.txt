@@ -1,0 +1,7 @@
+If you have some favorite music, you may change in the sounds folder -
+1.mp3 to 3.mp3 with those songs, as long as they are mp3 files
+That will cause them to play once the wallet is loaded - at random one will be selected.
+
+Why? WHY DOES A WALLET DO THIS?
+
+Dude...cause it's a mad lab rofl. 

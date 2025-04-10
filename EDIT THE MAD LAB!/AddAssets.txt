@@ -1,0 +1,76 @@
+Find code like this : In script.js
+
+const prefabAssets = [
+    { name: "Xoge", issuer: "rJMtvf5B3GbuFMrqybh5wYVXEH4QE8VyU1", hex: "586F676500000000000000000000000000000000" },
+    { name: "AntiSol", issuer: "rn3dKqno4t4vXTe9dBHzXQyJtkvMcaPdyA", hex: "416E7469536F6C00000000000000000000000000" },
+    { name: "RLUSD", issuer: "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De", hex: "524C555344000000000000000000000000000000" },
+    { name: "PUPU", issuer: "r4WfqR5DQ7PwPvVJv8Gism5cQBLGtNnvK8", hex: "5055505500000000000000000000000000000000" },
+    { name: "Dood", issuer: "rn5Y9N8APtrc7PVqXdMjkG9qvfw7FWi4kC", hex: "446F6F6400000000000000000000000000000000" },
+    { name: "3RDEYE", issuer: "rHjyBqFM5oQvXu1soWtATC4r1V6GBnhCQQ", hex: "3352444559450000000000000000000000000000" },
+    { name: "FWOGXRP", issuer: "rNm3VNJJ2PCmQFVDRpDR6N73UEtZh32HFi", hex: "46574F4758525000000000000000000000000000" },
+    { name: "Grind", issuer: "rso9qvhn2mbCtn2s8fuYG4w1tvxK2oQz7R", hex: "4772696E64000000000000000000000000000000" },
+    { name: "DIAMOND", issuer: "rG2MBHzydQySUHKtBWM5FKd4NUTuvKeQFh", hex: "4449414D4F4E4400000000000000000000000000" },
+    { name: "HAIC", issuer: "rsEXqMHTKDfGzncfJ25XtB9ZY8jayTv7N3", hex: "4841494300000000000000000000000000000000" }
+];
+
+Add the asset - XRPScan the issuer address, check issued assets - Grab the Hexcode (Now you have both needed entries)
+
+As for the charting - 
+
+That is done through index. Find the section clone one of them *Copy/Paste* And then edit it - I used dexscreener imbeds
+so they are not like the raw links, you can use either just put them in.
+
+This set of code.
+
+       <div class="button-group">
+                            <button class="red-black-btn" onclick="checkPoolPrice()">Check Pool Price</button>
+                            <button class="red-black-btn" onclick="queueSwapTransaction()">Execute Swap</button>
+                            <select id="chart-dropdown" onchange="openChartFromDropdown(this)">
+                                <option value="">Select Chart</option>
+                                <option value="https://www.tradingview.com/symbols/XRPUSD/">XRP Chart</option>
+                                <option value="https://dexscreener.com/xrpl/586f676500000000000000000000000000000000.rjmtvf5b3gbufmrqybh5wyvxeh4qe8vyu1_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">Xoge Chart</option>
+                                <option value="https://dexscreener.com/xrpl/416e7469536f6c00000000000000000000000000.rn3dkqno4t4vxte9dbhzxqyjtkvmcapdya_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">AntiSol Chart</option>
+                                <option value="https://dexscreener.com/xrpl/524c555344000000000000000000000000000000.rmxckbedwqr76quhesumdegf4b9xj8m5de_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">RLUSD Chart</option>
+                                <option value="https://dexscreener.com/xrpl/5055505500000000000000000000000000000000.r4wfqr5dq7pwpvvjv8gism5cqblgtnnvk8_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">PUPU Chart</option>
+                                <option value="https://dexscreener.com/xrpl/446f6f6400000000000000000000000000000000.rn5y9n8aptrc7pvqxdmjk9qvfw7fwi4kc_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">Dood Chart</option>
+                                <option value="https://dexscreener.com/xrpl/3352444559450000000000000000000000000000.rhjbqfm5oqvxu1sowtatc4r1v6gbnhcqq_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">3RDEYE Chart</option>
+                                <option value="https://dexscreener.com/xrpl/46574f4758525000000000000000000000000000.rnm3vnjj2pcmqfvdrpdr6n73uetz32hfi_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">FWOGXRP Chart</option>
+                                <option value="https://dexscreener.com/xrpl/4772696e64000000000000000000000000000000.rso9qvhn2mbctn2s8fuyg4w1tvxk2oqz7r_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">Grind Chart</option>
+                                <option value="https://dexscreener.com/xrpl/4449414d4f4e4400000000000000000000000000.rg2mbhzydqysuhktbwm5fkd4nutuvkeqfh_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">DIAMOND Chart</option>
+                                <option value="https://dexscreener.com/xrpl/4841494300000000000000000000000000000000.rsexqmhtkdfgzncfj25xtb9zy8jaytv7n3_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">HAIC Chart</option>
+                            </select>
+                        </div>
+						
+						
+						Pull out a section 
+						
+	 <option value="URL">Name</option>
+	 	 Edit it.
+		 
+		 Put in 
+		 
+		 <div class="button-group">
+                            <button class="red-black-btn" onclick="checkPoolPrice()">Check Pool Price</button>
+                            <button class="red-black-btn" onclick="queueSwapTransaction()">Execute Swap</button>
+                            <select id="chart-dropdown" onchange="openChartFromDropdown(this)">
+                                <option value="">Select Chart</option>
+                                <option value="https://www.tradingview.com/symbols/XRPUSD/">XRP Chart</option>
+                                <option value="https://dexscreener.com/xrpl/586f676500000000000000000000000000000000.rjmtvf5b3gbufmrqybh5wyvxeh4qe8vyu1_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">Xoge Chart</option>
+                                <option value="https://dexscreener.com/xrpl/416e7469536f6c00000000000000000000000000.rn3dkqno4t4vxte9dbhzxqyjtkvmcapdya_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">AntiSol Chart</option>
+                                <option value="https://dexscreener.com/xrpl/524c555344000000000000000000000000000000.rmxckbedwqr76quhesumdegf4b9xj8m5de_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">RLUSD Chart</option>
+                                <option value="https://dexscreener.com/xrpl/5055505500000000000000000000000000000000.r4wfqr5dq7pwpvvjv8gism5cqblgtnnvk8_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">PUPU Chart</option>
+                                <option value="https://dexscreener.com/xrpl/446f6f6400000000000000000000000000000000.rn5y9n8aptrc7pvqxdmjk9qvfw7fwi4kc_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">Dood Chart</option>
+                                <option value="https://dexscreener.com/xrpl/3352444559450000000000000000000000000000.rhjbqfm5oqvxu1sowtatc4r1v6gbnhcqq_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">3RDEYE Chart</option>
+                                
+								
+								
+								<option value="URL">Name</option>
+								
+								
+								<option value="https://dexscreener.com/xrpl/46574f4758525000000000000000000000000000.rnm3vnjj2pcmqfvdrpdr6n73uetz32hfi_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">FWOGXRP Chart</option>
+                                <option value="https://dexscreener.com/xrpl/4772696e64000000000000000000000000000000.rso9qvhn2mbctn2s8fuyg4w1tvxk2oqz7r_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">Grind Chart</option>
+                                <option value="https://dexscreener.com/xrpl/4449414d4f4e4400000000000000000000000000.rg2mbhzydqysuhktbwm5fkd4nutuvkeqfh_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">DIAMOND Chart</option>
+                                <option value="https://dexscreener.com/xrpl/4841494300000000000000000000000000000000.rsexqmhtkdfgzncfj25xtb9zy8jaytv7n3_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">HAIC Chart</option>
+                            </select>
+                        </div>
+						
