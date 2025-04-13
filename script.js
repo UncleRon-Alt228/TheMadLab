@@ -1336,6 +1336,17 @@ async function queueTransaction() {
             return;
         }
 
+        const destinationTagInput = document.getElementById('send-destination-tag')?.value.trim();
+        let destinationTag = null;
+        if (destinationTagInput) {
+            destinationTag = parseInt(destinationTagInput);
+            if (isNaN(destinationTag) || destinationTag < 0 || destinationTag > 4294967295) {
+                log('Error: Invalid Destination Tag. Must be a number between 0 and 4294967295.');
+                if (errorElement) errorElement.textContent = 'Invalid Destination Tag.';
+                return;
+            }
+        }
+
         const memo = document.getElementById('send-memo')?.value;
         const isMegaSend = document.getElementById('schedule-tx-transactions')?.checked;
         const sendCount = isMegaSend ? 5 : 1;
@@ -1414,7 +1425,9 @@ async function queueTransaction() {
             if (memo) {
                 tx.Memos = [{ Memo: { MemoData: stringToHex(memo), MemoType: stringToHex("Memo") } }];
             }
-
+            if (destinationTag !== null) {
+                tx.DestinationTag = destinationTag;
+            }
             const description = `Send ${amount} ${selectedAssetName} to ${destinationAddress}${memo ? ` with memo "${memo}"` : ''}${isMegaSend ? ` (Transaction ${i + 1}/5)` : ''}`;
             const txEntry = {
                 tx: tx,
@@ -1435,6 +1448,7 @@ async function queueTransaction() {
         if (errorElement) errorElement.textContent = `Error: ${error.message}`;
     }
 }
+
 async function queueMegaTransaction() {
     console.log("queueMegaTransaction() called");
     try {
@@ -1458,6 +1472,16 @@ async function queueMegaTransaction() {
         const destination = document.getElementById('send-destination').value;
         const amount = document.getElementById('send-amount').value;
         const currency = document.getElementById('send-asset-select').value;
+        const destinationTagInput = document.getElementById('send-destination-tag').value.trim();
+        let destinationTag = null;
+        if (destinationTagInput) {
+            destinationTag = parseInt(destinationTagInput);
+            if (isNaN(destinationTag) || destinationTag < 0 || destinationTag > 4294967295) {
+                log('Error: Invalid Destination Tag. Must be a number between 0 and 4294967295.');
+                errorElement.textContent = 'Invalid Destination Tag.';
+                return;
+            }
+        }
         const memo = document.getElementById('send-memo').value;
 
         if (!xrpl.isValidAddress(destination)) {
@@ -1527,6 +1551,9 @@ async function queueMegaTransaction() {
         if (memo) {
             tx.Memos = [{ Memo: { MemoData: stringToHex(memo), MemoType: stringToHex("Memo") } }];
         }
+        if (destinationTag !== null) {
+            tx.DestinationTag = destinationTag;
+        }
 
         const scheduleCheckbox = document.getElementById('schedule-tx-transactions');
         const delayInput = document.getElementById('schedule-delay-transactions');
@@ -1558,7 +1585,6 @@ async function queueMegaTransaction() {
 
         updateTransactionQueueDisplay();
         if (!isProcessingQueue) processTransactionQueue();
-
     } catch (error) {
         log(`Mega transaction error: ${error.message}`);
     }

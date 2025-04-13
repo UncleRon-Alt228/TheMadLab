@@ -174,43 +174,46 @@
                 </div>
                 <hr class="divider-line">
                 <div class="transaction-options">
-                    <h3>Transaction Details</h3>
-                    <div class="input-group">
-                        <label for="send-asset-select">Asset to Send:</label>
-                        <select id="send-asset-select" onchange="selectSendAsset()"></select>
-                    </div>
-                    <div class="input-group">
-                        <label for="send-destination">Destination Address:</label>
-                        <input type="text" id="send-destination" placeholder="Destination Address (e.g., r...)">
-                    </div>
-                    <div class="input-group">
-                        <label for="send-amount">Amount:</label>
-                        <input type="text" id="send-amount" placeholder="Amount (e.g., 200 or 1.134891)">
-                    </div>
-                    <div class="input-group">
-                        <label for="send-memo">Memo (Optional):</label>
-                        <input type="text" id="send-memo" placeholder="Memo (optional)">
-                    </div>
-                    <div class="token-row">
-                        <input type="checkbox" id="schedule-tx-transactions" onchange="toggleScheduleOptions('schedule-tx-transactions', 'schedule-delay-transactions')">
-                        <label for="schedule-tx-transactions">Schedule Transaction</label>
-                        <input type="number" id="schedule-delay-transactions" placeholder="Delay (minutes)" disabled>
-                    </div>
-                    <div class="button-group">
-					<button class="red-black-btn" id="send-tx-btn">Send</button>
-					<button class="red-black-btn" id="mega-send-btn" onclick="queueMegaTransaction()">Mega Send x5</button>
+					<h3>Transaction Details</h3>
+					<div class="input-group">
+						<label for="send-asset-select">Asset to Send:</label>
+						<select id="send-asset-select" onchange="selectSendAsset()"></select>
 					</div>
-                    <p class="donation-text">
-                        The Mad Lab is free, will remain free forever. You may choose to donate if you feel like it. 
-                        <a href="#" class="address-link" onclick="populateDonation('rnzr1LEkDktS4N9zccNQZtMZxfWrTz4RHw'); return false;">Click Here</a> 
-                        
-                    </p>
-                    <p id="address-error-transactions" class="error-message"></p>
-                    <div id="transaction-queue-transactions" class="transaction-queue">
-                        <p>Transaction Queue:</p>
-                        <p>No transactions in queue.</p>
-                    </div>
-                </div>
+					<div class="input-group">
+						<label for="send-destination">Destination Address:</label>
+						<input type="text" id="send-destination" placeholder="Destination Address (e.g., r...)">
+					</div>
+					<div class="input-group">
+						<label for="send-amount">Amount:</label>
+						<input type="text" id="send-amount" placeholder="Amount (e.g., 200 or 1.134891)">
+					</div>
+					<div class="input-group">
+						<label for="send-memo">Memo (Optional):</label>
+						<input type="text" id="send-memo" placeholder="Memo (optional)">
+					</div>
+					<div class="input-group">
+						<label for="send-destination-tag">Destination Tag (Optional):</label>
+						<input type="number" id="send-destination-tag" placeholder="Destination Tag (e.g., 123456)" min="0" max="4294967295">
+					</div>
+					<div class="token-row">
+						<input type="checkbox" id="schedule-tx-transactions" onchange="toggleScheduleOptions('schedule-tx-transactions', 'schedule-delay-transactions')">
+						<label for="schedule-tx-transactions">Schedule Transaction</label>
+						<input type="number" id="schedule-delay-transactions" placeholder="Delay (minutes)" disabled>
+					</div>
+					<div class="button-group">
+						<button class="red-black-btn" id="send-tx-btn">Send</button>
+						<button class="red-black-btn" id="mega-send-btn" onclick="queueMegaTransaction()">Mega Send x5</button>
+					</div>
+					<p class="donation-text">
+						The Mad Lab is free, will remain free forever. You may choose to donate if you feel like it. 
+						<a href="#" class="address-link" onclick="populateDonation('rnzr1LEkDktS4N9zccNQZtMZxfWrTz4RHw'); return false;">Click Here</a> 
+					</p>
+					<p id="address-error-transactions" class="error-message"></p>
+					<div id="transaction-queue-transactions" class="transaction-queue">
+						<p>Transaction Queue:</p>
+						<p>No transactions in queue.</p>
+					</div>
+				</div>
                 <hr class="divider-line">
                 <div class="nuke-trustline">
                     <h3>☢️ Nuke Trustline Zone ☢️</h3>
