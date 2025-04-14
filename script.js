@@ -1335,12 +1335,15 @@ async function queueTransaction() {
 
         const selectedAssetName = sendAssetSelect.value;
         const amountInput = document.getElementById('send-amount');
-        const amount = parseFloat(amountInput?.value);
+        const rawAmount = amountInput?.value.trim();
+        
+        const amount = parseFloat(rawAmount);
         if (!amount || amount <= 0 || isNaN(amount)) {
             log('Error: Invalid amount.');
             if (errorElement) errorElement.textContent = 'Invalid amount.';
             return;
         }
+        const roundedAmount = parseFloat(amount.toFixed(6));
 
         const destinationTagInput = document.getElementById('send-destination-tag')?.value.trim();
         let destinationTag = null;
@@ -1381,7 +1384,7 @@ async function queueTransaction() {
                 ledger_index: "current"
             });
             const senderLine = accountLines.result.lines.find(line => line.currency === asset.hex && line.account === asset.issuer);
-            if (!senderLine || parseFloat(senderLine.balance) < amount) {
+            if (!senderLine || parseFloat(senderLine.balance) < roundedAmount) {
                 log(`Error: Insufficient ${selectedAssetName} balance. Available: ${senderLine ? senderLine.balance : 0}`);
                 if (errorElement) errorElement.textContent = `Insufficient balance: ${senderLine ? senderLine.balance : 0}`;
                 return;
@@ -1400,15 +1403,19 @@ async function queueTransaction() {
             }
             const destBalance = parseFloat(destLine.balance) || 0;
             const destLimit = parseFloat(destLine.limit) || 0;
-            if (destLimit !== 0 && (destBalance + amount) > destLimit) {
-                log(`Error: Destination trustline limit too low. Current: ${destBalance}/${destLimit}, Needed: ${destBalance + amount}`);
-                if (errorElement) errorElement.textContent = `Destination trustline limit too low: ${destLimit}. Needs at least ${Math.ceil(destBalance + amount)}.`;
+            if (destLimit !== 0 && (destBalance + roundedAmount) > destLimit) {
+                log(`Error: Destination trustline limit too low. Current: ${destBalance}/${destLimit}, Needed: ${destBalance + roundedAmount}`);
+                if (errorElement) errorElement.textContent = `Destination trustline limit too low: ${destLimit}. Needs at least ${Math.ceil(destBalance + roundedAmount)}.`;
                 return;
             }
         }
 
-        const formattedAmount = asset ? amount.toFixed(6) : xrpl.xrpToDrops(amount.toString());
-        const sendMax = asset ? (amount * 1.001).toFixed(6) : xrpl.xrpToDrops((amount * 1.001).toString());
+        
+        const formattedAmount = asset ? roundedAmount.toFixed(6) : xrpl.xrpToDrops(roundedAmount.toFixed(6));
+        
+        const sendMaxAmount = roundedAmount * 1.001;
+        const roundedSendMax = parseFloat(sendMaxAmount.toFixed(6));
+        const sendMax = asset ? roundedSendMax.toFixed(6) : xrpl.xrpToDrops(roundedSendMax.toFixed(6));
 
         for (let i = 0; i < sendCount; i++) {
             const tx = {
@@ -1434,7 +1441,7 @@ async function queueTransaction() {
             if (destinationTag !== null) {
                 tx.DestinationTag = destinationTag;
             }
-            const description = `Send ${amount} ${selectedAssetName} to ${destinationAddress}${memo ? ` with memo "${memo}"` : ''}${isMegaSend ? ` (Transaction ${i + 1}/5)` : ''}`;
+            const description = `Send ${roundedAmount} ${selectedAssetName} to ${destinationAddress}${memo ? ` with memo "${memo}"` : ''}${isMegaSend ? ` (Transaction ${i + 1}/5)` : ''}`;
             const txEntry = {
                 tx: tx,
                 wallet: wallet,
@@ -1454,7 +1461,6 @@ async function queueTransaction() {
         if (errorElement) errorElement.textContent = `Error: ${error.message}`;
     }
 }
-
 async function queueMegaTransaction() {
     console.log("queueMegaTransaction() called");
     try {
