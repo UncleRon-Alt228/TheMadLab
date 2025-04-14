@@ -45,6 +45,87 @@ h6,
     cursor: url('test-tube-cursor.png') 0 0, auto !important;
 }
 
+#minting .input-group {
+    margin-bottom: 15px;
+}
+
+#minting .input-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+#minting .input-group input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #444;
+    border-radius: 4px;
+    background-color: #2a2a2a;
+    color: #ffffff;
+    box-sizing: border-box;
+}
+
+#minting .input-group input:focus {
+    outline: none;
+    border-color: #ff4444;
+}
+
+#minting .section-description ol {
+    font-size: 0.7rem;
+    color: #ccc;
+    margin-bottom: 8px;
+    text-align: left;
+    padding-left: 20px;
+}
+
+@media (max-width: 768px) {
+    #minting .input-group input {
+        font-size: 0.7rem;
+        padding: 6px;
+    }
+    #minting .section-description ol {
+        font-size: 0.6rem;
+    }
+}
+
+/* Add to Styles.css */
+#mintConfirmationModal .password-modal-content {
+    max-width: 400px;
+}
+
+#mintConfirmationModal h2 {
+    color: #ff4444;
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+    text-shadow: 0 0 5px #ff4444;
+}
+
+#mintConfirmationModal p {
+    font-size: 0.7rem;
+    color: #ccc;
+    line-height: 1.6;
+    margin-bottom: 10px;
+}
+
+#mintConfirmationModal #confirm-currency,
+#mintConfirmationModal #confirm-amount {
+    color: #00cc00;
+    font-weight: bold;
+}
+
+@media (max-width: 768px) {
+    #mintConfirmationModal .password-modal-content {
+        max-width: 300px;
+    }
+    #mintConfirmationModal h2 {
+        font-size: 1rem;
+    }
+    #mintConfirmationModal p {
+        font-size: 0.6rem;
+    }
+}
+
 .container {
     max-width: calc(100% - 40vw);
     margin: 0 auto;

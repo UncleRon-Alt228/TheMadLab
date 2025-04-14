@@ -21,6 +21,12 @@ let cachedBalance = { totalBalanceXrp: 0, totalReserveXrp: 0, availableBalanceXr
 const poolLogPrefixXrplAssetsBasePair = "XrplAssetsBasePair_X7k9PqWvT2mY8nL5jR3";
 let dynamicAssets = [];
 
+function convertCurrencyCode(code) {
+    if (!code) return null;
+    const upperCode = code.toUpperCase();
+    return upperCode.length <= 3 ? upperCode : xrpl.convertStringToHex(upperCode).padEnd(40, '0');
+}
+
 function randomizeServerSelection() {
     const serverSelect = document.getElementById('wss-server');
     if (!serverSelect) {
@@ -3142,11 +3148,8 @@ async function ensureConnected() {
 }
 
 
-async function calculateAvailableBalance(address, additionalTrustlines = 0) {
+async function calculateAvailableBalance(address, trustlineAdjustment = 0) {
     try {
-        const serverInfo = await client.request({ command: "server_info" });
-        const reserveBaseXrp = xrpl.dropsToXrp(serverInfo.result.info.validated_ledger.reserve_base);
-        const reserveIncXrp = xrpl.dropsToXrp(serverInfo.result.info.validated_ledger.reserve_inc);
         const accountInfo = await client.request({
             command: "account_info",
             account: address,
@@ -3157,18 +3160,59 @@ async function calculateAvailableBalance(address, additionalTrustlines = 0) {
             account: address,
             ledger_index: "current"
         });
+        const accountObjects = await client.request({
+            command: "account_objects",
+            account: address,
+            ledger_index: "current"
+        });
+        const serverInfo = await client.request({
+            command: "server_info"
+        });
 
-        const totalBalanceXrp = xrpl.dropsToXrp(accountInfo.result.account_data.Balance);
-        const trustlines = accountLines.result.lines.length + additionalTrustlines;
-        const totalReserveXrp = parseFloat(reserveBaseXrp) + (trustlines * parseFloat(reserveIncXrp));
-        const availableBalanceXrp = parseFloat(totalBalanceXrp) - totalReserveXrp;
+        const totalBalanceXrp = parseFloat(xrpl.dropsToXrp(accountInfo.result.account_data.Balance));
+        const reserveBaseXrp = parseFloat(serverInfo.result.info.validated_ledger.reserve_base_xrp);
+        const reserveIncXrp = parseFloat(serverInfo.result.info.validated_ledger.reserve_inc_xrp);
+
+        let trustlineCount = 0;
+        for (const line of accountLines.result.lines) {
+            const limit = parseFloat(line.limit);
+            const limitPeer = parseFloat(line.limit_peer);
+            if (limit === 0 && limitPeer > 0) {
+                continue;
+            }
+            trustlineCount++;
+        }
+
+        let otherObjectCount = 0;
+        for (const obj of accountObjects.result.account_objects) {
+            if (["Offer", "Escrow", "PayChannel", "NFTokenPage"].includes(obj.LedgerEntryType)) {
+                otherObjectCount++;
+            }
+        }
+
+        const reserveObjectCount = trustlineCount + otherObjectCount + trustlineAdjustment;
+        const totalReserveXrp = reserveBaseXrp + (reserveObjectCount * reserveIncXrp);
+
+        let lockedBalanceXrp = 0;
+        for (const obj of accountObjects.result.account_objects) {
+            if (obj.LedgerEntryType === "Escrow") {
+                lockedBalanceXrp += parseFloat(xrpl.dropsToXrp(obj.Amount));
+            } else if (obj.LedgerEntryType === "Offer" && obj.TakerGets && typeof obj.TakerGets === "string") {
+                lockedBalanceXrp += parseFloat(xrpl.dropsToXrp(obj.TakerGets));
+            } else if (obj.LedgerEntryType === "PayChannel") {
+                lockedBalanceXrp += parseFloat(xrpl.dropsToXrp(obj.Amount));
+            }
+        }
+
+        const availableBalanceXrp = totalBalanceXrp - totalReserveXrp - lockedBalanceXrp;
 
         return { totalBalanceXrp, totalReserveXrp, availableBalanceXrp };
     } catch (error) {
-        log(`If this is a new account you will need to fund it and that will activate it: ${error.message}`);
+        log(`Error calculating available balance: ${error.message}`);
         throw error;
     }
 }
+
 
 async function updateNukeAssetDetails(forceFetch = false) {
     const nukeAssetSelect = document.getElementById('nuke-asset-select');
@@ -3207,55 +3251,68 @@ async function updateNukeAssetDetails(forceFetch = false) {
 
 let availableBalanceXrp = 0;
 
-async function calculateAvailableBalance(address, additionalTrustlines = 0) {
+async function calculateAvailableBalance(address, trustlineAdjustment = 0) {
     try {
-        const serverInfo = await client.request({ command: "server_info" });
-        const validatedLedger = serverInfo?.result?.info?.validated_ledger;
-        if (!validatedLedger || !validatedLedger.reserve_base_xrp || !validatedLedger.reserve_inc_xrp) {
-            log(`Invalid server info: ${JSON.stringify(serverInfo)}`);
-            return { totalBalanceXrp: 0, totalReserveXrp: 0, availableBalanceXrp: 0 };
-        }
-
-        const reserveBaseXrp = validatedLedger.reserve_base_xrp;
-        const reserveIncXrp = validatedLedger.reserve_inc_xrp;
-
         const accountInfo = await client.request({
             command: "account_info",
             account: address,
             ledger_index: "current"
         });
-
-        if (!accountInfo?.result?.account_data?.Balance) {
-            log(`Invalid account info for ${address}: ${JSON.stringify(accountInfo)}`);
-            return { totalBalanceXrp: 0, totalReserveXrp: 0, availableBalanceXrp: 0 };
-        }
-
         const accountLines = await client.request({
             command: "account_lines",
             account: address,
             ledger_index: "current"
         });
+        const accountObjects = await client.request({
+            command: "account_objects",
+            account: address,
+            ledger_index: "current"
+        });
+        const serverInfo = await client.request({ command: "server_info" });
 
-        const balanceDrops = accountInfo.result.account_data.Balance;
-        if (!balanceDrops || !/^-?[0-9]+$/.test(balanceDrops)) {
-            log(`Invalid balance for ${address}: ${balanceDrops}`);
-            return { totalBalanceXrp: 0, totalReserveXrp: 0, availableBalanceXrp: 0 };
+        const totalBalanceXrp = parseFloat(xrpl.dropsToXrp(accountInfo.result.account_data.Balance));
+        const reserveBaseXrp = parseFloat(serverInfo.result.info.validated_ledger.reserve_base_xrp);
+        const reserveIncXrp = parseFloat(serverInfo.result.info.validated_ledger.reserve_inc_xrp);
+
+        let trustlineCount = 0;
+        for (const line of accountLines.result.lines) {
+            const limit = parseFloat(line.limit);
+            const limitPeer = parseFloat(line.limit_peer);
+            if (limit === 0 && limitPeer > 0) {
+                continue;
+            }
+            trustlineCount++;
         }
 
-        const totalBalanceXrp = xrpl.dropsToXrp(balanceDrops);
-        const trustlines = accountLines?.result?.lines?.length || 0 + additionalTrustlines;
-        const totalReserveXrp = parseFloat(reserveBaseXrp) + (trustlines * parseFloat(reserveIncXrp));
-        const availableBalanceXrpLocal = parseFloat(totalBalanceXrp) - totalReserveXrp;
+        let otherObjectCount = 0;
+        for (const obj of accountObjects.result.account_objects) {
+            if (["Offer", "Escrow", "PayChannel", "NFTokenPage"].includes(obj.LedgerEntryType)) {
+                otherObjectCount++;
+            }
+        }
 
-        availableBalanceXrp = availableBalanceXrpLocal;
+        const reserveObjectCount = trustlineCount + otherObjectCount + trustlineAdjustment;
+        const totalReserveXrp = reserveBaseXrp + (reserveObjectCount * reserveIncXrp);
 
-        return { totalBalanceXrp, totalReserveXrp, availableBalanceXrp: availableBalanceXrpLocal };
+        let lockedBalanceXrp = 0;
+        for (const obj of accountObjects.result.account_objects) {
+            if (obj.LedgerEntryType === "Escrow") {
+                lockedBalanceXrp += parseFloat(xrpl.dropsToXrp(obj.Amount));
+            } else if (obj.LedgerEntryType === "Offer" && obj.TakerGets && typeof obj.TakerGets === "string") {
+                lockedBalanceXrp += parseFloat(xrpl.dropsToXrp(obj.TakerGets));
+            } else if (obj.LedgerEntryType === "PayChannel") {
+                lockedBalanceXrp += parseFloat(xrpl.dropsToXrp(obj.Amount));
+            }
+        }
+
+        const availableBalanceXrp = totalBalanceXrp - totalReserveXrp - lockedBalanceXrp;
+
+        return { totalBalanceXrp, totalReserveXrp, availableBalanceXrp };
     } catch (error) {
-        log(`Error calculating available balance - If this is a new account you will need to fund it first: ${error.message}`);
-        return { totalBalanceXrp: 0, totalReserveXrp: 0, availableBalanceXrp: 0 };
+        log(`Error calculating available balance: ${error.message}`);
+        throw error;
     }
 }
-
 let globalLPTokens = [];
 
 async function checkBalance() {
@@ -3287,6 +3344,16 @@ async function checkBalance() {
         for (const line of accountLines.result.lines) {
             const currencyHex = line.currency;
             const issuer = line.account;
+            const limit = parseFloat(line.limit);
+            const limitPeer = parseFloat(line.limit_peer);
+
+				//Lizard Judo bunnyboy BJJ pole dancing jeety jeet
+				//note to self this is the fix for filtering trustlines on issuer accounts to not flood the balance panel if they minted a token and have large array trustlines
+            if (limit === 0 && limitPeer > 0) {
+ 
+                continue;
+            }
+
             const lpName = await decodeLPToken(currencyHex, issuer);
             if (lpName) {
                 globalLPTokens.push({
@@ -3297,7 +3364,7 @@ async function checkBalance() {
                 });
                 dynamicAssets.push({ name: lpName, issuer: issuer, hex: currencyHex, isLP: true });
             } else {
-                const currencyName = xrpl.convertHexToString(currencyHex).replace(/\0/g, '') || currencyHex;
+                const currencyName = xrpl.convertHexToString(currencyHex).replace(/\0/g, '') || `[HEX:${currencyHex.slice(0, 8)}]`;
                 if (!prefabAssets.some(a => a.hex === currencyHex)) {
                     dynamicAssets.push({ name: currencyName, issuer: issuer, hex: currencyHex, isLP: false });
                 }
@@ -3319,6 +3386,14 @@ async function checkBalance() {
             `;
 
             for (const line of accountLines.result.lines) {
+                const limit = parseFloat(line.limit);
+                const limitPeer = parseFloat(line.limit_peer);
+
+ 
+                if (limit === 0 && limitPeer > 0) {
+                    continue;
+                }
+
                 const currencyHex = line.currency;
                 let assetName = xrpl.convertHexToString(currencyHex).replace(/\0/g, '') || `[HEX:${currencyHex.slice(0, 8)}]`;
                 const issuer = line.account;
@@ -3350,7 +3425,6 @@ async function checkBalance() {
         throw error;
     }
 }
-
 function populateAssetDropdowns() {
     if (!prefabAssets || !Array.isArray(prefabAssets)) {
         log('Error: prefabAssets is not defined or not an array.');
@@ -3419,7 +3493,6 @@ function populateAssetDropdowns() {
     updateNukeAssetDetails(false);
     updateSwapDirection();
 }
-
 function getAssetByName(assetName) {
     if (assetName === "XRP") {
         return { name: "XRP", currency: "XRP" };
