@@ -2189,6 +2189,49 @@ async function processTransactionQueue() {
                 log(`Transaction failed: ${description} - ${result.result.meta.TransactionResult}`);
                 throw new Error(`Transaction failed: ${result.result.meta.TransactionResult}`);
             }
+        } else if (type === "escrowcreate") {
+            log('Processing escrow create transaction...');
+            const prepared = await client.autofill(txEntry.tx);
+            const ledgerInfo = await client.request({ command: "ledger_current" });
+            const currentLedger = ledgerInfo.result.ledger_current_index;
+            prepared.LastLedgerSequence = currentLedger + 50;
+            const signed = txEntry.wallet.sign(prepared);
+            log(`Submitting transaction: ${description}`);
+            const result = await client.submitAndWait(signed.tx_blob);
+            if (result.result.meta.TransactionResult === "tesSUCCESS") {
+                log(`Transaction succeeded: ${description}`);
+                log(`Transaction Hash: ${result.result.hash}`);
+                const sequence = result.result.Sequence;
+                log(`Sequence Number (Save!): ${sequence}`);
+                document.getElementById('escrow-sequence').textContent = `Sequence Number: ${sequence}`;
+                await checkBalance();
+                const postEther = spawnEtherNoise(5);
+                window.etherPostFlux = postEther;
+                await resecureCache();
+            } else {
+                log(`Transaction failed: ${description} - ${result.result.meta.TransactionResult}`);
+                throw new Error(`Transaction failed: ${result.result.meta.TransactionResult}`);
+            }
+        } else if (type === "escrowfinish" || type === "escrowcancel") {
+            log(`Processing escrow ${type} transaction...`);
+            const prepared = await client.autofill(txEntry.tx);
+            const ledgerInfo = await client.request({ command: "ledger_current" });
+            const currentLedger = ledgerInfo.result.ledger_current_index;
+            prepared.LastLedgerSequence = currentLedger + 50;
+            const signed = txEntry.wallet.sign(prepared);
+            log(`Submitting transaction: ${description}`);
+            const result = await client.submitAndWait(signed.tx_blob);
+            if (result.result.meta.TransactionResult === "tesSUCCESS") {
+                log(`Transaction succeeded: ${description}`);
+                log(`Transaction Hash: ${result.result.hash}`);
+                await checkBalance();
+                const postEther = spawnEtherNoise(5);
+                window.etherPostFlux = postEther;
+                await resecureCache();
+            } else {
+                log(`Transaction failed: ${description} - ${result.result.meta.TransactionResult}`);
+                throw new Error(`Transaction failed: ${result.result.meta.TransactionResult}`);
+            }
         } else {
             log('Processing payment transaction...');
             await processPaymentTransaction(txEntry);
@@ -2222,6 +2265,7 @@ async function processTransactionQueue() {
         }
     }
 }
+
 
 async function processPaymentTransaction(txEntry) {
     try {
@@ -3230,7 +3274,7 @@ async function checkBalance() {
 
         if (errorElement) errorElement.textContent = '';
 
-        const { totalBalanceXrp, totalReserveXrp, availableBalanceXrp: available } = await calculateAvailableBalance(address);
+        const { totalBalanceXrp, totalReserveXrp, availableBalanceXrp } = await calculateAvailableBalance(address);
 
         const accountLines = await client.request({
             command: "account_lines",
@@ -3251,7 +3295,6 @@ async function checkBalance() {
                     issuer: issuer,
                     balance: parseFloat(line.balance)
                 });
-
                 dynamicAssets.push({ name: lpName, issuer: issuer, hex: currencyHex, isLP: true });
             } else {
                 const currencyName = xrpl.convertHexToString(currencyHex).replace(/\0/g, '') || currencyHex;
@@ -3260,8 +3303,7 @@ async function checkBalance() {
                 }
             }
         }
-
-        
+        log(`Updated globalLPTokens: ${JSON.stringify(globalLPTokens)}`);
 
         if (accountAddress && assetGrid) {
             accountAddress.innerHTML = `Address: <a href="https://xrpscan.com/account/${address}" class="address-link" target="_blank">${address}</a>`;
@@ -3271,7 +3313,7 @@ async function checkBalance() {
                     <div class="asset-balance">
                         Total: ${formatBalance(totalBalanceXrp)} XRP<br>
                         Reserve: ${formatBalance(totalReserveXrp)} XRP<br>
-                        Available: ${formatBalance(available)} XRP
+                        Available: ${formatBalance(availableBalanceXrp)} XRP
                     </div>
                 </div>
             `;
@@ -3280,7 +3322,6 @@ async function checkBalance() {
                 const currencyHex = line.currency;
                 let assetName = xrpl.convertHexToString(currencyHex).replace(/\0/g, '') || `[HEX:${currencyHex.slice(0, 8)}]`;
                 const issuer = line.account;
-
                 const lpName = await decodeLPToken(currencyHex, issuer);
                 if (lpName) {
                     assetName = lpName;
@@ -3298,6 +3339,7 @@ async function checkBalance() {
             log('Error: UI elements (account-address or asset-grid) not found.');
         }
 
+        log('Wallet balance checked.');
         updateBalances();
         selectTrustAsset();
         await new Promise(resolve => setTimeout(resolve, 100));

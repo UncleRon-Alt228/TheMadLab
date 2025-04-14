@@ -66,15 +66,16 @@
         <div class="header">
             <h1>🧪 The Mad Lab 🧪</h1>
             <nav class="nav-bar">
-                <a href="#wallet-management" onclick="expandSection('wallet-management')">Wallet Management</a>
-                <a href="#send-transactions" onclick="expandSection('send-transactions')">Send Transactions</a>
-                <a href="#amm-swap" onclick="expandSection('amm-swap')">AMM Swap</a>
-                <a href="#trustline-management" onclick="expandSection('trustline-management')">Trustline Management</a>
-                <a href="#domain-management" onclick="expandSection('domain-management')">Domain Management</a>
-                <a href="#account-deletion" onclick="expandSection('account-deletion')">Account Deletion</a>
-                <a href="#set-regular-key" onclick="expandSection('set-regular-key')">Set Regular Key</a>
-                <a href="#network-stats" onclick="expandSection('network-stats')">Network Stats</a>
-            </nav>
+				<a href="#wallet-management" onclick="expandSection('wallet-management')">Wallet Management</a>
+				<a href="#send-transactions" onclick="expandSection('send-transactions')">Send Transactions</a>
+				<a href="#amm-swap" onclick="expandSection('amm-swap')">AMM Swap</a>
+				<a href="#trustline-management" onclick="expandSection('trustline-management')">Trustline Management</a>
+				<a href="#domain-management" onclick="expandSection('domain-management')">Domain Management</a>
+				<a href="#account-deletion" onclick="expandSection('account-deletion')">Account Deletion</a>
+				<a href="#set-regular-key" onclick="expandSection('set-regular-key')">Set Regular Key</a>
+				<a href="#escrow-transactions" onclick="expandSection('escrow-transactions')">Escrow Transactions</a>
+				<a href="#network-stats" onclick="expandSection('network-stats')">Network Stats</a>
+			</nav>
         </div>
 
         <img src="science.jfif" alt="Science Image" class="science-image">
@@ -592,13 +593,60 @@
             </div>
         </div>
 
+		<div class="section minimized" id="escrow-transactions">
+			<div class="section-header" onclick="toggleSection('escrow-transactions')">
+				<h2>Self-Escrow</h2>
+				<button class="toggle-btn">▼</button>
+			</div>
+			<div class="section-content">
+				<p class="instruction-text">
+					Lock XRP in a self-escrow to reserve it until the End Time. Cancel after the End Time to release funds back to yourself. Minimum End Time is 30 seconds. Each escrow requires a 0.015 XRP fee and reserves 0.2 XRP. The reserve is refunded like a trustline close when the escrow is closed by you at the completion date/time. Checking on your escrow will show red text or green text based on in progress or completed. This system will be revised in 2026 when amendments for more escrow options are enabled on the ledger. Enjoy using the simple escrow until then, it is very easy to use and simply works.
+				</p>
+				<h3>Create Self-Escrow</h3>
+				<div class="input-group">
+					<label for="escrow-amount">Amount (XRP):</label>
+					<input id="escrow-amount" type="number" step="any" min="0" placeholder="e.g., 10">
+				</div>
+				<div class="input-group">
+					<label for="escrow-end-time">End Time (seconds):</label>
+					<input id="escrow-end-time" type="number" min="30" placeholder="e.g., 120">
+				</div>
+				<div class="button-group">
+					<button class="red-black-btn" onclick="queueEscrowCreate()">Create Self-Escrow</button>
+				</div>
+				<h3>Manage Self-Escrows</h3>
+				<p class="instruction-text">
+					List active self-escrows to check their status (Locked or Unlocked) and sequence numbers. Cancel an escrow using its sequence number after the End Time to release funds.
+				</p>
+				<div class="button-group">
+					<button class="red-black-btn" onclick="fetchRecentEscrows()">List Self-Escrows</button>
+				</div>
+				<div class="input-group">
+					<label for="escrow-cancel-sequence">Sequence Number:</label>
+					<input id="escrow-cancel-sequence" type="number" min="0" placeholder="e.g., 95008133">
+				</div>
+				<div class="button-group">
+					<button class="red-black-btn" onclick="queueEscrowCancel()">Cancel Self-Escrow</button>
+				</div>
+				<p id="address-error-escrow" class="error-message"></p>
+				<div id="escrow-queue" class="transaction-queue"></div>
+			</div>
+		</div>
+
+
+
+
+
+
+		</div>
         <footer class="footer">
             <p>By using this page, you confirm reading the disclaimer at <a href="index.html">index.html</a>. If not, please do so for safe usage.</p>
         </footer>
     </div>
-
+	
     <script src="script.js?v=5"></script>
 	<script src="extendedscripts.js?v=5"></script>
 	<script src="lp.js"></script>
+	<script src="escrow.js"></script>
 </body>
 </html>

@@ -2224,3 +2224,10 @@ select:disabled {
 .emergency-btn:hover {
     background-color: #cc0000; 
 }
+
+#address-error-escrow .locked {
+    color: #ff4444;
+}
+#address-error-escrow .unlocked {
+    color: #00cc00;
+}
