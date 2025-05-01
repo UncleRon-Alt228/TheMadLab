@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Mad Lab</title>
     <link rel="stylesheet" href="Styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/xrpl@4.2.0/build/xrpl-latest-min.min.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/xrpl@4.2.0/build/xrpl-latest-min.min.js"></script> -->
+    <script src="xrpl.js"></script>
     <script src="js/qrcode.min.js"></script>
     <script src="js/argon2-bundled.min.js"></script>
     <script src="js/argon2cypher.js"></script>
@@ -24,11 +25,11 @@
                     <div class="asset-grid" id="asset-grid"></div>
                 </div>
             </div>
-			<div class="emergency-clear-container">
-            <button class="red-black-btn emergency-btn" id="emergency-clear-queue" onclick="emergencyClearQueue()">☢️☢️Emergency Clear Queue☢️☢️</button>
-			<hr class="divider-line">
-			<button class="red-black-btn emergency-btn" onclick="resetAllWalletData()">Clean Out All Wallet Data From The Lab</button>
-			</div>
+            <div class="emergency-clear-container">
+                <button class="red-black-btn emergency-btn" id="emergency-clear-queue" onclick="emergencyClearQueue()">☢️☢️Emergency Clear Queue☢️☢️</button>
+                <hr class="divider-line">
+                <button class="red-black-btn emergency-btn" onclick="resetAllWalletData()">Clean Out All Wallet Data From The Lab</button>
+            </div>
         </div>
 
         <div class="sidebar-right-container">
@@ -65,18 +66,20 @@
 
         <div class="header">
             <h1>🧪 The Mad Lab 🧪</h1>
-		<nav class="nav-bar">
-			<a href="#wallet-management" onclick="expandSection('wallet-management')">Wallet Management</a>
-			<a href="#send-transactions" onclick="expandSection('send-transactions')">Send Transactions</a>
-			<a href="#amm-swap" onclick="expandSection('amm-swap')">AMM Swap</a>
-			<a href="#trustline-management" onclick="expandSection('trustline-management')">Trustline Management</a>
-			<a href="#domain-management" onclick="expandSection('domain-management')">Domain Management</a>
-			<a href="#account-deletion" onclick="expandSection('account-deletion')">Account Deletion</a>
-			<a href="#set-regular-key" onclick="expandSection('set-regular-key')">Set Regular Key</a>
-			<a href="#escrow-transactions" onclick="expandSection('escrow-transactions')">Escrow Transactions</a>
-			<a href="#minting" onclick="expandSection('minting')">Minting</a>
-			<a href="#network-stats" onclick="expandSection('network-stats')">Network Stats</a>
-		</nav>
+            <nav class="nav-bar">
+				<a href="#wallet-management" onclick="expandSection('wallet-management')">Wallet Management</a>
+				<a href="#send-transactions" onclick="expandSection('send-transactions')">Send Transactions</a>
+				<a href="#amm-swap" onclick="expandSection('amm-swap')">AMM Swap</a>
+				<a href="#trustline-management" onclick="expandSection('trustline-management')">Trustline Management</a>
+				<a href="#domain-management" onclick="expandSection('domain-management')">Domain Management</a>
+				<a href="#account-deletion" onclick="expandSection('account-deletion')">Account Deletion</a>
+				<a href="#set-regular-key" onclick="expandSection('set-regular-key')">Set Regular Key</a>
+				<a href="#escrow-transactions" onclick="expandSection('escrow-transactions')">Escrow Transactions</a>
+				<a href="#minting" onclick="expandSection('minting')">Minting</a>
+				<a href="#network-stats" onclick="expandSection('network-stats')">Network Stats</a>
+				<a href="#guardian-tools" onclick="expandSection('guardian-tools')">Guardian Tools</a>
+				<a href="#admin-tools" onclick="expandSection('admin-tools')">Admin Tools</a>
+			</nav>
         </div>
 
         <img src="science.jfif" alt="Science Image" class="science-image">
@@ -154,85 +157,117 @@
                     <span id="fileName" class="file-name">No file chosen</span>
                 </div>
                 <div class="custom-file-input">
-				<button class="red-black-btn" id="load-unencrypted-wallet-btn">Load Unencrypted Wallet</button>
-				<input type="file" id="unencryptedWalletFile" accept=".json" onchange="loadUnencryptedWalletFile(event)" style="display: none;">
-				<span id="unencryptedFileName" class="file-name">No file chosen</span>
-				</div>
+                    <button class="red-black-btn" id="load-unencrypted-wallet-btn">Load Unencrypted Wallet</button>
+                    <input type="file" id="unencryptedWalletFile" accept=".json" onchange="loadUnencryptedWalletFile(event)" style="display: none;">
+                    <span id="unencryptedFileName" class="file-name">No file chosen</span>
+                </div>
                 <button class="red-black-btn" onclick="saveWalletFile()">Save Wallet</button>
                 <p id="address-error" class="error-message"></p>
                 <div id="wallet-warning" class="wallet-warning" style="display: none;"></div>
             </div>
         </div>
 
-        <div class="section minimized" id="send-transactions">
-            <div class="section-header" onclick="toggleSection('send-transactions')">
-                <h2>Send Transactions</h2>
-                <button class="toggle-btn">▼</button>
-            </div>
-            <div class="section-content">
-                <div class="section-description">
-                    <h3 style="color: #00cc00;">Send Transactions Overview</h3>
-                    <p>Send XRP or tokens to any XRPL address. Specify asset, amount, destination, and optional memo. Schedule transactions or use "Mega Send x5" to queue five times.</p>
-                </div>
-                <hr class="divider-line">
-                <div class="transaction-options">
-					<h3>Transaction Details</h3>
-					<div class="input-group">
-						<label for="send-asset-select">Asset to Send:</label>
-						<select id="send-asset-select" onchange="selectSendAsset()"></select>
-					</div>
-					<div class="input-group">
-						<label for="send-destination">Destination Address:</label>
-						<input type="text" id="send-destination" placeholder="Destination Address (e.g., r...)">
-					</div>
-					<div class="input-group">
-						<label for="send-amount">Amount:</label>
-						<input type="text" id="send-amount" placeholder="Amount (e.g., 200 or 1.134891)">
-					</div>
-					<div class="input-group">
-						<label for="send-memo">Memo (Optional):</label>
-						<input type="text" id="send-memo" placeholder="Memo (optional)">
-					</div>
-					<div class="input-group">
-						<label for="send-destination-tag">Destination Tag (Optional):</label>
-						<input type="number" id="send-destination-tag" placeholder="Destination Tag (e.g., 123456)" min="0" max="4294967295">
-					</div>
-					<div class="token-row">
-						<input type="checkbox" id="schedule-tx-transactions" onchange="toggleScheduleOptions('schedule-tx-transactions', 'schedule-delay-transactions')">
-						<label for="schedule-tx-transactions">Schedule Transaction</label>
-						<input type="number" id="schedule-delay-transactions" placeholder="Delay (minutes)" disabled>
-					</div>
-					<div class="button-group">
-						<button class="red-black-btn" id="send-tx-btn">Send</button>
-						<button class="red-black-btn" id="mega-send-btn" onclick="queueMegaTransaction()">Mega Send x5</button>
-					</div>
-					<p class="donation-text">
-						The Mad Lab is free, will remain free forever. You may choose to donate if you feel like it. 
-						<a href="#" class="address-link" onclick="populateDonation('rnzr1LEkDktS4N9zccNQZtMZxfWrTz4RHw'); return false;">Click Here</a> 
-					</p>
-					<p id="address-error-transactions" class="error-message"></p>
-					<div id="transaction-queue-transactions" class="transaction-queue">
-						<p>Transaction Queue:</p>
-						<p>No transactions in queue.</p>
-					</div>
-				</div>
-                <hr class="divider-line">
-                <div class="nuke-trustline">
-                    <h3>☢️ Nuke Trustline Zone ☢️</h3>
-                    <p class="instruction-text nuke-warning">
-                        💥 <strong>DANGER:</strong> Removes trustlines by sending all balances to the issuer and setting the limit to 0. Ideal for tiny balances. <strong>XRP cannot be nuked.</strong> Use cautiously!
-                    </p>
-                    <div class="input-group">
-                        <label for="nuke-asset-select">Trustline Asset to Nuke:</label>
-                        <select id="nuke-asset-select" onchange="updateNukeAssetDetails()"></select>
+<div class="section minimized" id="send-transactions">
+    <div class="section-header" onclick="toggleSection('send-transactions')">
+        <h2>Send Transactions</h2>
+        <button class="toggle-btn">▼</button>
+    </div>
+    <div class="section-content">
+        <div class="section-description">
+            <h3 style="color: #00cc00;">Send Transactions Overview</h3>
+            <p>You may perform normal sending operations in this section. Send is a single transaction and megasend is there just for fun, but will send 5 times the exactly set transaction details. Megasend is fairly useless unless you want to be sure the counterparty notices the transaction and memo, just be sure to split the value you aim to send to 20% of the total intended.</p>
+        </div>
+        <hr class="divider-line">
+        <div class="transaction-options">
+            <h3>Transaction Details</h3>
+            <div class="input-group">
+                <label for="send-asset-dropdown">Asset to Send:</label>
+                <div class="custom-dropdown" id="send-asset-dropdown">
+                    <div class="dropdown-trigger" onclick="toggleDropdown('send-asset-dropdown')">
+                        <span id="send-asset-display">Select Asset</span>
+                        <span class="dropdown-arrow">▼</span>
                     </div>
-                    <p id="nuke-asset-balance" class="instruction-text">Current Balance: -</p>
-                    <button class="red-black-btn nuke-btn" onclick="queueNukeTrustline()">💥 Nuke Trustline 💥</button>
-                    <p id="address-error-nuke" class="error-message"></p>
+                    <div class="dropdown-panel" id="send-asset-panel" style="display: none;">
+                        <div class="asset-grid" id="send-asset-grid"></div>
+                    </div>
                 </div>
+            </div>
+            <div class="input-group">
+                <label for="send-destination">Destination Address:</label>
+                <input type="text" id="send-destination" placeholder="Destination Address (e.g., r...)">
+            </div>
+            <div class="input-group">
+                <label for="send-amount">Amount:</label>
+                <input type="text" id="send-amount" placeholder="Amount (e.g., 200 or 1.134891)">
+                <!-- Add percentage buttons -->
+                <div class="percentage-buttons">
+                    <button class="percentage-btn" onclick="setSendPercentage(10)">10%</button>
+                    <button class="percentage-btn" onclick="setSendPercentage(20)">20%</button>
+                    <button class="percentage-btn" onclick="setSendPercentage(30)">30%</button>
+                    <button class="percentage-btn" onclick="setSendPercentage(40)">40%</button>
+                    <button class="percentage-btn" onclick="setSendPercentage(50)">50%</button>
+                    <button class="percentage-btn" onclick="setSendPercentage(60)">60%</button>
+                    <button class="percentage-btn" onclick="setSendPercentage(70)">70%</button>
+                    <button class="percentage-btn" onclick="setSendPercentage(80)">80%</button>
+                    <button class="percentage-btn" onclick="setSendPercentage(90)">90%</button>
+                    <button class="percentage-btn" onclick="setSendPercentage(100)">100%</button>
+                </div>
+            </div>
+            <div class="input-group">
+                <label for="send-memo">Memo (Optional):</label>
+                <input type="text" id="send-memo" placeholder="Memo (optional)">
+            </div>
+            <div class="input-group">
+                <label for="send-destination-tag">Destination Tag (Optional):</label>
+                <input type="number" id="send-destination-tag" placeholder="Destination Tag (e.g., 123456)" min="0" max="4294967295">
+            </div>
+            <div class="token-row">
+                <input type="checkbox" id="schedule-tx-transactions" onchange="toggleScheduleOptions('schedule-tx-transactions', 'schedule-delay-transactions')">
+                <label for="schedule-tx-transactions">Schedule Transaction</label>
+                <input type="number" id="schedule-delay-transactions" placeholder="Delay (minutes)" disabled>
+            </div>
+            <div class="button-group">
+                <button class="red-black-btn" id="send-tx-btn" onclick="queueTransaction()">Send</button>
+                <button class="red-black-btn" id="mega-send-btn" onclick="queueMegaTransaction()">Mega Send x5</button>
+                <button class="red-black-btn" onclick="checkBalance()">Check Balance</button>
+            </div>
+            <div class="donation-link">
+                <p>The Mad Lab is free, will remain free forever. You may choose to donate if you feel like it.</p>
+                <a href="#" onclick="populateDonation('rnzr1LEkDktS4N9zccNQZtMZxfWrTz4RHw'); return false;">Click Here to Send Donation to The Mad Lab!</a>
+            </div>
+            <p id="address-error-transactions" class="error-message"></p>
+            <div id="transaction-queue-transactions" class="transaction-queue">
+                <p>Transaction Queue:</p>
+                <p>No transactions in queue.</p>
             </div>
         </div>
-		
+        <hr class="divider-line">
+        <div class="nuke-trustline">
+            <h3>☢️ Nuke Trustline Zone ☢️</h3>
+            <p class="instruction-text nuke-warning">
+                💥 <strong>DANGER:</strong> Removes trustlines by sending all balances to the issuer and setting the limit to 0. Ideal for tiny balances. <strong>XRP cannot be nuked.</strong> Use cautiously!
+            </p>
+            <div class="input-group">
+                <label for="nuke-asset-dropdown">Trustline Asset to Nuke:</label>
+                <div class="custom-dropdown" id="nuke-asset-dropdown">
+                    <div class="dropdown-trigger" onclick="toggleDropdown('nuke-asset-dropdown')">
+                        <span id="nuke-asset-display">Select Asset</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </div>
+                    <div class="dropdown-panel" id="nuke-asset-panel" style="display: none;">
+                        <div class="asset-grid" id="nuke-asset-grid"></div>
+                    </div>
+                </div>
+            </div>
+            <p id="nuke-asset-balance" class="instruction-text">Current Balance: -</p>
+            <button class="red-black-btn nuke-btn" onclick="queueNukeTrustline()">💥 Nuke Trustline 💥</button>
+            <p id="address-error-nuke" class="error-message"></p>
+        </div>
+    </div>
+</div>
+        
+
+
         <div class="section minimized" id="amm-swap">
             <div class="section-header" onclick="toggleSection('amm-swap')">
                 <h2>AMM Swap</h2>
@@ -249,13 +284,29 @@
                     <div class="account-overview">
                         <div class="swap-field">
                             <label>Input Asset:</label>
-                            <select id="swap-input-asset" onchange="updateSwapDirection()"></select>
+                            <div class="custom-dropdown" id="swap-input-asset-dropdown">
+                                <div class="dropdown-trigger" onclick="toggleDropdown('swap-input-asset-dropdown')">
+                                    <span id="swap-input-asset-display">Select Asset</span>
+                                    <span class="dropdown-arrow">▼</span>
+                                </div>
+                                <div class="dropdown-panel" id="swap-input-asset-panel" style="display: none;">
+                                    <div class="asset-grid" id="swap-input-asset-grid"></div>
+                                </div>
+                            </div>
                             <p id="input-balance">Balance: -</p>
                         </div>
                         <div class="swap-arrow">↓</div>
                         <div class="swap-field">
                             <label>Output Asset:</label>
-                            <select id="swap-output-asset" onchange="updateSwapDirection()"></select>
+                            <div class="custom-dropdown" id="swap-output-asset-dropdown">
+                                <div class="dropdown-trigger" onclick="toggleDropdown('swap-output-asset-dropdown')">
+                                    <span id="swap-output-asset-display">Select Asset</span>
+                                    <span class="dropdown-arrow">▼</span>
+                                </div>
+                                <div class="dropdown-panel" id="swap-output-asset-panel" style="display: none;">
+                                    <div class="asset-grid" id="swap-output-asset-grid"></div>
+                                </div>
+                            </div>
                             <p id="output-balance">Balance: -</p>
                         </div>
                         <div id="pool-info" class="swap-info">
@@ -283,7 +334,16 @@
                         <div id="swap-result" class="swap-result">
                             <p>Swap Result: -</p>
                         </div>
+
+						<div class="percentage-buttons">
+							<button class="green-btn" onclick="setSwapPercentage(25)">25%</button>
+							<button class="green-btn" onclick="setSwapPercentage(50)">50%</button>
+							<button class="green-btn" onclick="setSwapPercentage(75)">75%</button>
+							<button class="green-btn" onclick="setSwapPercentage(100)">100%</button>
+						</div>
+
                         <div class="button-group">
+                            <button class="red-black-btn" onclick="checkBalance()">Check Balance</button>
                             <button class="red-black-btn" onclick="checkPoolPrice()">Check Pool Price</button>
                             <button class="red-black-btn" onclick="queueSwapTransaction()">Execute Swap</button>
                             <select id="chart-dropdown" onchange="openChartFromDropdown(this)">
@@ -296,12 +356,9 @@
                                 <option value="https://dexscreener.com/xrpl/446f6f6400000000000000000000000000000000.rn5y9n8aptrc7pvqxdmjk9qvfw7fwi4kc_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">Dood Chart</option>
                                 <option value="https://dexscreener.com/xrpl/3352444559450000000000000000000000000000.rhjbqfm5oqvxu1sowtatc4r1v6gbnhcqq_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">3RDEYE Chart</option>
                                 <option value="https://dexscreener.com/xrpl/46574f4758525000000000000000000000000000.rnm3vnjj2pcmqfvdrpdr6n73uetz32hfi_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">FWOGXRP Chart</option>
-                                
-								<option value="https://dexscreener.com/xrpl/GRD.rDaDV5smdWjr8QcagD8UhbPZWzJBkdVAnH_XRP?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">Grind Chart</option>
-								
-								<option value="https://dexscreener.com/xrpl/5349474D41000000000000000000000000000000.rfKYWZ84fm9eVEdoTcsQCo1WdqMPyaUF5z_XRP?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">SigmaΣ Chart</option>
-								
-								<option value="https://dexscreener.com/xrpl/4449414d4f4e4400000000000000000000000000.rg2mbhzydqysuhktbwm5fkd4nutuvkeqfh_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">DIAMOND Chart</option>
+                                <option value="https://dexscreener.com/xrpl/GRD.rDaDV5smdWjr8QcagD8UhbPZWzJBkdVAnH_XRP?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">Grind Chart</option>
+                                <option value="https://dexscreener.com/xrpl/5349474D41000000000000000000000000000000.rfKYWZ84fm9eVEdoTcsQCo1WdqMPyaUF5z_XRP?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">SigmaΣ Chart</option>
+                                <option value="https://dexscreener.com/xrpl/4449414d4f4e4400000000000000000000000000.rg2mbhzydqysuhktbwm5fkd4nutuvkeqfh_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">DIAMOND Chart</option>
                                 <option value="https://dexscreener.com/xrpl/4841494300000000000000000000000000000000.rsexqmhtkdfgzncfj25xtb9zy8jaytv7n3_xrp?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15">HAIC Chart</option>
                             </select>
                         </div>
@@ -313,139 +370,232 @@
                     </div>
                 </div>
             </div>
-			
-			
-			<hr class="divider-line">
+            
+            <hr class="divider-line">
 
-<div class="lp-management">
-    <h3>Liquidity Pool Management</h3>
-    <p class="section-description">Control your stake in XRPL AMM pools—deposit assets, withdraw your share, or vote on trading fees.</p>
-
-
-    <div class="lp-asset-selection">
-        <div class="input-group">
-            <label for="lp-asset1">Asset 1:</label>
-            <select id="lp-asset1"></select>
-        </div>
-        <div class="input-group">
-            <label for="lp-asset2">Asset 2:</label>
-            <select id="lp-asset2"></select>
-        </div>
-        <button class="red-black-btn">Check Pool</button>
-    </div>
-
-    <div id="lp-info" class="swap-info">
-        <p>Pool Status: -</p>
-        <p>Your LP Tokens: -</p>
-        <p>Pool Assets: -</p>
-        <p>Trading Fee: -</p>
-    </div>
-
-    <div class="lp-subsection" id="lp-deposit">
-        <div class="lp-subsection-header" onclick="toggleLPSection('lp-deposit')">
-            <h4>Deposit to Pool</h4>
-            <button class="toggle-btn">▼</button>
-        </div>
-        <div class="lp-subsection-content">
-            <p class="lp-description">Add assets to the liquidity pool to earn trading fees.</p>
-            <div class="input-group">
-                <label for="lp-amount1-deposit">Amount 1:</label>
-                <input type="text" id="lp-amount1-deposit" placeholder="Amount of Asset 1">
-                <input type="range" id="lp-amount1-slider-deposit" min="0" max="100" value="0">
-                <span id="lp-amount1-percentage-deposit">0%</span>
-            </div>
-            <div class="input-group">
-                <label for="lp-amount2-deposit">Amount 2 (Optional):</label>
-                <input type="text" id="lp-amount2-deposit" placeholder="Amount of Asset 2">
-                <input type="range" id="lp-amount2-slider-deposit" min="0" max="100" value="0">
-                <span id="lp-amount2-percentage-deposit">0%</span>
-            </div>
-            <button class="red-black-btn lp-action-btn" onclick="queueLPDeposit()">Deposit</button>
-        </div>
-    </div>
-
-		<div class="lp-subsection" id="lp-withdraw">
-			<div class="lp-subsection-header" onclick="toggleLPSection('lp-withdraw')">
-				<h4>Withdraw from Pool</h4>
-				<button class="toggle-btn">▼</button>
-			</div>
-			<div class="lp-subsection-content">
-				<p class="lp-description">Remove your share from the pool. Adjust the slider to set the number of LP tokens to withdraw. The pool will return assets in a balanced 50/50 value split.</p>
-				<div class="input-group">
-					<label for="lp-amount-withdraw">LP Tokens to Withdraw:</label>
-					<input type="text" id="lp-amount-withdraw" placeholder="0" readonly>
-				</div>
-				<div class="input-group">
-					<label for="lp-withdraw-slider">Withdraw Percentage:</label>
-					<input type="range" id="lp-withdraw-slider" min="0" max="100" value="0">
-					<span id="lp-withdraw-percentage">0%</span>
-				</div>
-				<button class="red-black-btn lp-action-btn" onclick="queueLPWithdraw()">Withdraw</button>
-			</div>
-		</div>
-
-    <div class="lp-subsection" id="lp-vote">
-        <div class="lp-subsection-header" onclick="toggleLPSection('lp-vote')">
-            <h4>Vote on Trading Fee</h4>
-            <button class="toggle-btn">▼</button>
-        </div>
-        <div class="lp-subsection-content">
-            <p class="lp-description">Influence the pool’s trading fee (0-1%) as an LP token holder.</p>
-            <div class="input-group">
-                <label for="lp-vote-fee">Trading Fee (0-1%):</label>
-                <input type="text" id="lp-vote-fee" placeholder="e.g., 0.6">
-            </div>
-            <div class="input-group">
-                <label for="lp-vote-fee-slider">Fee Slider (0.01% to 1%):</label>
-                <input type="range" id="lp-vote-fee-slider" min="0" max="100" value="0">
-                <span id="lp-vote-fee-percentage">0%</span>
-            </div>
-            <button class="red-black-btn lp-action-btn" onclick="queueLPVote()">Vote Fee</button>
-        </div>
-    </div>
-
-		<p id="address-error-lp" class="error-message"></p>
-		<div id="lp-queue" class="transaction-queue">
-			<p>Transaction Queue:</p>
-			<p>No transactions in queue.</p>
-				</div>
-			</div>
-		</div>
-
-        <div class="section minimized" id="trustline-management">
-            <div class="section-header" onclick="toggleSection('trustline-management')">
-                <h2>Trustline Management</h2>
-                <button class="toggle-btn">▼</button>
-            </div>
-            <div class="section-content">
-                <div class="section-description">
-                    <h3 style="color: #00cc00;">Trustline Management Overview</h3>
-                    <p>You may use this tool to add/remove trustlines or nuke trustlines to remove them with trash on the line. This tool is designed to handle dynamic assets - Once you manually add an issuer and hex by putting the data in the boxes it will add the assets to your default dropdowns across the site. Add Issuer/Hex and set trustline, this will add unkown assets to the site and your wallet. Hex can be found on Xrpscan.com on issued tokens tab of the issuer account.</p>
-                </div>
-                <div class="trustline-controls">
-                    <select id="trust-asset-select" onchange="selectTrustAsset()"></select>
-                    <input type="text" id="trust-issuer" placeholder="Issuer Address (e.g., r...)">
-                    <input type="text" id="trust-currency" placeholder="Currency Hex Code">
-                    <p id="current-trust-limit" class="current-trust-limit"></p>
-                    <input type="text" id="trust-limit" placeholder="Trustline Limit (e.g., 1000000000000000)">
-                    <div class="token-row">
-                        <input type="checkbox" id="schedule-tx-trustlines" onchange="toggleScheduleOptions('schedule-tx-trustlines', 'schedule-delay-trustlines')">
-                        <label for="schedule-tx-trustlines">Schedule Transaction</label>
-                        <input type="number" id="schedule-delay-trustlines" placeholder="Delay (minutes)" disabled>
+            <div class="lp-management">
+                <h3>Liquidity Pool Management</h3>
+                <p class="section-description">Control your stake in XRPL AMM pools—deposit assets, withdraw your share, or vote on trading fees.</p>
+                <div class="lp-asset-selection">
+                    <div class="input-group">
+                        <label for="lp-asset1-dropdown">Asset 1:</label>
+                        <div class="custom-dropdown" id="lp-asset1-dropdown">
+                            <div class="dropdown-trigger" onclick="toggleDropdown('lp-asset1-dropdown')">
+                                <span id="lp-asset1-display">Select Asset</span>
+                                <span class="dropdown-arrow">▼</span>
+                            </div>
+                            <div class="dropdown-panel" id="lp-asset1-panel" style="display: none;">
+                                <div class="asset-grid" id="lp-asset1-grid"></div>
+                            </div>
+                        </div>
                     </div>
-                    <p class="instruction-text">Note: Setting limit to 0 locks tokens in stasis; undo by resetting limit.</p>
+                    <div class="input-group">
+                        <label for="lp-asset2-dropdown">Asset 2:</label>
+                        <div class="custom-dropdown" id="lp-asset2-dropdown">
+                            <div class="dropdown-trigger" onclick="toggleDropdown('lp-asset2-dropdown')">
+                                <span id="lp-asset2-display">Select Asset</span>
+                                <span class="dropdown-arrow">▼</span>
+                            </div>
+                            <div class="dropdown-panel" id="lp-asset2-panel" style="display: none;">
+                                <div class="asset-grid" id="lp-asset2-grid"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="red-black-btn">Check Pool</button>
                 </div>
-                <div class="button-group">
-                    <button class="red-black-btn" onclick="queueTrustlineTransaction()">Set Trustline</button>
-                    <button class="red-black-btn" onclick="closeTrustline()">Close Trustline</button>
+                <div id="lp-info" class="swap-info">
+                    <p>Pool Status: -</p>
+                    <p>Your LP Tokens: -</p>
+                    <p>Pool Assets: -</p>
+                    <p>Trading Fee: -</p>
                 </div>
-                <p id="address-error-trustlines" class="error-message"></p>
-                <div id="trustline-queue" class="transaction-queue">
+                <div class="lp-subsection" id="lp-deposit">
+                    <div class="lp-subsection-header" onclick="toggleLPSection('lp-deposit')">
+                        <h4>Deposit to Pool</h4>
+                        <button class="toggle-btn">▼</button>
+                    </div>
+                    <div class="lp-subsection-content">
+                        <p class="lp-description">Add assets to the liquidity pool to earn trading fees.</p>
+                        <div class="input-group">
+                            <label for="lp-amount1-deposit">Amount 1:</label>
+                            <input type="text" id="lp-amount1-deposit" placeholder="Amount of Asset 1">
+                            <input type="range" id="lp-amount1-slider-deposit" min="0" max="100" value="0">
+                            <span id="lp-amount1-percentage-deposit">0%</span>
+                        </div>
+                        <div class="input-group">
+                            <label for="lp-amount2-deposit">Amount 2 (Optional):</label>
+                            <input type="text" id="lp-amount2-deposit" placeholder="Amount of Asset 2">
+                            <input type="range" id="lp-amount2-slider-deposit" min="0" max="100" value="0">
+                            <span id="lp-amount2-percentage-deposit">0%</span>
+                        </div>
+                        <button class="red-black-btn lp-action-btn" onclick="queueLPDeposit()">Deposit</button>
+                    </div>
+                </div>
+                <div class="lp-subsection" id="lp-withdraw">
+                    <div class="lp-subsection-header" onclick="toggleLPSection('lp-withdraw')">
+                        <h4>Withdraw from Pool</h4>
+                        <button class="toggle-btn">▼</button>
+                    </div>
+                    <div class="lp-subsection-content">
+                        <p class="lp-description">Remove your share from the pool. Adjust the slider to set the number of LP tokens to withdraw. The pool will return assets in a balanced 50/50 value split.</p>
+                        <div class="input-group">
+                            <label for="lp-amount-withdraw">LP Tokens to Withdraw:</label>
+                            <input type="text" id="lp-amount-withdraw" placeholder="0" readonly>
+                        </div>
+                        <div class="input-group">
+                            <label for="lp-withdraw-slider">Withdraw Percentage:</label>
+                            <input type="range" id="lp-withdraw-slider" min="0" max="100" value="0">
+                            <span id="lp-withdraw-percentage">0%</span>
+                        </div>
+                        <button class="red-black-btn lp-action-btn" onclick="queueLPWithdraw()">Withdraw</button>
+                    </div>
+                </div>
+                <div class="lp-subsection" id="lp-vote">
+                    <div class="lp-subsection-header" onclick="toggleLPSection('lp-vote')">
+                        <h4>Vote on Trading Fee</h4>
+                        <button class="toggle-btn">▼</button>
+                    </div>
+                    <div class="lp-subsection-content">
+                        <p class="lp-description">Influence the pool’s trading fee (0-1%) as an LP token holder.</p>
+                        <div class="input-group">
+                            <label for="lp-vote-fee">Trading Fee (0-1%):</label>
+                            <input type="text" id="lp-vote-fee" placeholder="e.g., 0.6">
+                        </div>
+                        <div class="input-group">
+                            <label for="lp-vote-fee-slider">Fee Slider (0.01% to 1%):</label>
+                            <input type="range" id="lp-vote-fee-slider" min="0" max="100" value="0">
+                            <span id="lp-vote-fee-percentage">0%</span>
+                        </div>
+                        <button class="red-black-btn lp-action-btn" onclick="queueLPVote()">Vote Fee</button>
+                    </div>
+                </div>
+                <p id="address-error-lp" class="error-message"></p>
+                <div id="lp-queue" class="transaction-queue">
                     <p>Transaction Queue:</p>
                     <p>No transactions in queue.</p>
                 </div>
             </div>
         </div>
+
+		<div class="section minimized" id="guardian-tools">
+			<div class="section-header" onclick="toggleSection('guardian-tools')">
+				<h2>Guardian Tools</h2>
+				<button class="toggle-btn">▼</button>
+			</div>
+			<div class="section-content">
+				<div class="section-description">
+					<h3 style="color: #00cc00;">Guardian Tools Overview</h3>
+					<p>Monitor asset pairs and automatically sell Asset A to buy Asset B when the price of Asset B relative to Asset A changes by the specified percentage (e.g., -0.01% for a slight price drop). Set the balance to swap and slippage tolerance. Guardian checks prices every 60 seconds and queues transactions when conditions are met. Results are logged below and persist until page reload.</p>
+				</div>
+				<hr class="divider-line">
+				<div class="guardian-controls">
+					<h3>Configure Guardian Rule</h3>
+					<div class="input-group">
+						<label>Asset A:</label>
+						<div class="custom-dropdown" id="guardian-asset1-dropdown">
+							<div class="dropdown-trigger" onclick="toggleDropdown('guardian-asset1-dropdown')">
+								<span id="guardian-asset1-display">XRP</span>
+								<span class="dropdown-arrow">▼</span>
+							</div>
+							<div class="dropdown-panel" id="guardian-asset1-panel" style="display: none;">
+								<div class="asset-grid" id="guardian-asset1-grid"></div>
+							</div>
+						</div>
+					</div>
+					<div class="input-group">
+						<label>Asset B:</label>
+						<div class="custom-dropdown" id="guardian-asset2-dropdown">
+							<div class="dropdown-trigger" onclick="toggleDropdown('guardian-asset2-dropdown')">
+								<span id="guardian-asset2-display">Xoge</span>
+								<span class="dropdown-arrow">▼</span>
+							</div>
+							<div class="dropdown-panel" id="guardian-asset2-panel" style="display: none;">
+								<div class="asset-grid" id="guardian-asset2-grid"></div>
+							</div>
+						</div>
+					</div>
+					<div class="button-group">
+						<button class="red-black-btn" onclick="guardianCheckPoolPrice()">Get Current Price</button>
+					</div>
+					<div id="guardian-pool-info" class="swap-info">
+						<p>Current Price: -</p>
+						<p>Starting Price: -</p>
+					</div>
+					<div class="input-group">
+						<label>Price Change of Asset B (%):</label>
+						<input type="range" id="guardian-price-slider" min="-10" max="10" step="0.01" value="0" oninput="updateGuardianPriceDisplay()">
+						<span id="guardian-price-percentage">0.00%</span>
+					</div>
+					<div class="input-group">
+						<label>Balance to Swap (%):</label>
+						<input type="range" id="guardian-balance-slider" min="0" max="100" value="0" oninput="updateGuardianBalanceDisplay()">
+						<span id="guardian-balance-percentage">0%</span>
+					</div>
+					<div class="input-group">
+						<label>Slippage Tolerance (%):</label>
+						<input type="range" id="guardian-slippage-slider" min="0.1" max="5" step="0.1" value="1" oninput="updateGuardianSlippageDisplay()">
+						<span id="guardian-slippage-percentage">1.00%</span>
+					</div>
+					<div class="button-group">
+						<button class="green-btn" onclick="addGuardianRule()">Confirm Rule</button>
+					</div>
+					<p id="guardian-error" class="error-message"></p>
+					<div id="guardian-queue" class="transaction-queue">
+						<p>Watched Assets:</p>
+						<p>No assets being watched.</p>
+					</div>
+					<hr class="divider-line">
+					<div class="guardian-output" id="guardian-output">
+
+					</div>
+				</div>
+			</div>
+		</div>
+
+				<div class="section minimized" id="trustline-management">
+			<div class="section-header" onclick="toggleSection('trustline-management')">
+				<h2>Trustline Management</h2>
+				<button class="toggle-btn">▼</button>
+			</div>
+			<div class="section-content">
+				<div class="section-description">
+					<h3 style="color: #00cc00;">Trustline Management Overview</h3>
+					<p>You may use this tool to add/remove trustlines or nuke trustlines to remove them with trash on the line. This tool is designed to handle dynamic assets - Once you manually add an issuer and hex by putting the data in the boxes it will add the assets to your default dropdowns across the site. Add Issuer/Hex and set trustline, this will add unkown assets to the site and your wallet. Hex can be found on Xrpscan.com on issued tokens tab of the issuer account.</p>
+				</div>
+				<div class="trustline-controls">
+					<div class="custom-dropdown" id="trust-asset-dropdown">
+						<div class="dropdown-trigger" onclick="toggleDropdown('trust-asset-dropdown')">
+							<span id="trust-asset-display">Select Asset</span>
+							<span class="dropdown-arrow">▼</span>
+						</div>
+						<div class="dropdown-panel" id="trust-asset-panel" style="display: none;">
+							<div class="asset-grid" id="trust-asset-grid"></div>
+						</div>
+					</div>
+					<input type="text" id="trust-issuer" placeholder="Issuer Address (e.g., r...)">
+					<input type="text" id="trust-currency" placeholder="Currency Hex Code">
+					<p id="current-trust-limit" class="current-trust-limit"></p>
+					<input type="text" id="trust-limit" placeholder="Trustline Limit (e.g., 1000000000000000)">
+					<div class="token-row">
+						<input type="checkbox" id="schedule-tx-trustlines" onchange="toggleScheduleOptions('schedule-tx-trustlines', 'schedule-delay-trustlines')">
+						<label for="schedule-tx-trustlines">Schedule Transaction</label>
+						<input type="number" id="schedule-delay-trustlines" placeholder="Delay (minutes)" disabled>
+					</div>
+					<p class="instruction-text">Note: Setting limit to 0 locks tokens in stasis; undo by resetting limit.</p>
+				</div>
+				<div class="button-group">
+					<button class="red-black-btn" onclick="checkBalance()">Check Trustlines</button>
+					<button class="red-black-btn" onclick="queueTrustlineTransaction()">Set Trustline</button>
+					<button class="red-black-btn" onclick="closeTrustline()">Close Trustline</button>
+					<button class="red-black-btn" onclick="checkIssuerData()">Check Issuer Data</button>
+				</div>
+				<p id="address-error-trustlines" class="error-message"></p>
+				<div id="trustline-queue" class="transaction-queue">
+					<p>Transaction Queue:</p>
+					<p>No transactions in queue.</p>
+				</div>
+			</div>
+		</div>
 
         <div class="section minimized" id="domain-management">
             <div class="section-header" onclick="toggleSection('domain-management')">
@@ -598,118 +748,234 @@
             </div>
         </div>
 
-		<div class="section minimized" id="escrow-transactions">
-			<div class="section-header" onclick="toggleSection('escrow-transactions')">
-				<h2>Self-Escrow</h2>
-				<button class="toggle-btn">▼</button>
-			</div>
-			<div class="section-content">
-				<p class="instruction-text">
-					Lock XRP in a self-escrow to reserve it until the End Time. Cancel after the End Time to release funds back to yourself. Minimum End Time is 30 seconds. Each escrow requires a 0.015 XRP fee and reserves 0.2 XRP. The reserve is refunded like a trustline close when the escrow is closed by you at the completion date/time. Checking on your escrow will show red text or green text based on in progress or completed. This system will be revised in 2026 when amendments for more escrow options are enabled on the ledger. Enjoy using the simple escrow until then, it is very easy to use and simply works.
-				</p>
-				<h3>Create Self-Escrow</h3>
-				<div class="input-group">
-					<label for="escrow-amount">Amount (XRP):</label>
-					<input id="escrow-amount" type="number" step="any" min="0" placeholder="e.g., 10">
-				</div>
-				<div class="input-group">
-					<label for="escrow-end-time">End Time (seconds):</label>
-					<input id="escrow-end-time" type="number" min="30" placeholder="e.g., 120">
-				</div>
-				<div class="button-group">
-					<button class="red-black-btn" onclick="queueEscrowCreate()">Create Self-Escrow</button>
-				</div>
-				<h3>Manage Self-Escrows</h3>
-				<p class="instruction-text">
-					List active self-escrows to check their status (Locked or Unlocked) and sequence numbers. Cancel an escrow using its sequence number after the End Time to release funds.
-				</p>
-				<div class="button-group">
-					<button class="red-black-btn" onclick="fetchRecentEscrows()">List Self-Escrows</button>
-				</div>
-				<div class="input-group">
-					<label for="escrow-cancel-sequence">Sequence Number:</label>
-					<input id="escrow-cancel-sequence" type="number" min="0" placeholder="e.g., 95008133">
-				</div>
-				<div class="button-group">
-					<button class="red-black-btn" onclick="queueEscrowCancel()">Cancel Self-Escrow</button>
-				</div>
-				<p id="address-error-escrow" class="error-message"></p>
-				<div id="escrow-queue" class="transaction-queue"></div>
-			</div>
-		</div>
+        <div class="section minimized" id="escrow-transactions">
+            <div class="section-header" onclick="toggleSection('escrow-transactions')">
+                <h2>Self-Escrow</h2>
+                <button class="toggle-btn">▼</button>
+            </div>
+            <div class="section-content">
+                <p class="instruction-text">
+                    Lock XRP in a self-escrow to reserve it until the End Time. Cancel after the End Time to release funds back to yourself. Minimum End Time is 30 seconds. Each escrow requires a 0.015 XRP fee and reserves 0.2 XRP. The reserve is refunded like a trustline close when the escrow is closed by you at the completion date/time. Checking on your escrow will show red text or green text based on in progress or completed. This system will be revised in 2026 when amendments for more escrow options are enabled on the ledger. Enjoy using the simple escrow until then, it is very easy to use and simply works.
+                </p>
+                <h3>Create Self-Escrow</h3>
+                <div class="input-group">
+                    <label for="escrow-amount">Amount (XRP):</label>
+                    <input id="escrow-amount" type="number" step="any" min="0" placeholder="e.g., 10">
+                </div>
+                <div class="input-group">
+                    <label for="escrow-end-time">End Time (seconds):</label>
+                    <input id="escrow-end-time" type="number" min="30" placeholder="e.g., 120">
+                </div>
+                <div class="button-group">
+                    <button class="red-black-btn" onclick="queueEscrowCreate()">Create Self-Escrow</button>
+                </div>
+                <h3>Manage Self-Escrows</h3>
+                <p class="instruction-text">
+                    List active self-escrows to check their status (Locked or Unlocked) and sequence numbers. Cancel an escrow using its sequence number after the End Time to release funds.
+                </p>
+                <div class="button-group">
+                    <button class="red-black-btn" onclick="fetchRecentEscrows()">List Self-Escrows</button>
+                </div>
+                <div class="input-group">
+                    <label for="escrow-cancel-sequence">Sequence Number:</label>
+                    <input id="escrow-cancel-sequence" type="number" min="0" placeholder="e.g., 95008133">
+                </div>
+                <div class="button-group">
+                    <button class="red-black-btn" onclick="queueEscrowCancel()">Cancel Self-Escrow</button>
+                </div>
+                <p id="address-error-escrow" class="error-message"></p>
+                <div id="escrow-queue" class="transaction-queue"></div>
+            </div>
+        </div>
 
+        <div class="section minimized" id="minting">
+            <div class="section-header" onclick="toggleSection('minting')">
+                <h2>Mint New Token</h2>
+                <button class="toggle-btn">▼</button>
+            </div>
+            <div class="section-content">
+                <div class="section-description">
+                    <h3 style="color: #00cc00;">Minting Overview</h3>
+                    <h3 style="color: #ff4444;">Warning: Some Admin Tools features (e.g., Clawback) must be enabled before minting due to XRPL ledger rules.</h3>
+                    <p>Create a new fungible token using your loaded wallet as the issuer. Choose the appropriate minting method based on your needs:</p>
+                    <ul>
+                        <li><strong>Standard Mint</strong>: Basic token minting without additional issuer controls.</li>
+                        <li><strong>Mint with Clawback</strong>: Enables Clawback, allowing token recovery from trustlines (permanent).</li>
+                    </ul>
+                    <p>This process will:
+                        <ol>
+                            <li>Create a receiver account to hold the minted tokens.</li>
+                            <li>Fund it with 10 XRP to activate it (deducted from your current issuer wallet).</li>
+                            <li>Allow you to download the receiver account's seed and address (save these securely).</li>
+                            <li>For Clawback: Enable the clawback flag before minting.</li>
+                            <li>Set a trustline from the receiver to your wallet for the new token.</li>
+                            <li>Mint the token and send it to the receiver account.</li>
+                            <li>While Mad Lab is cooking the mixes for you, sit and stare at the screen and think of how cool it is. After it’s done, download your new encrypted wallet!</li>
+                            <li>The new wallet holds the token; this is your main account for using/deploying the token, while the issuer account is the one you’re currently on.</li>
+                            <li>Consider setting up a liquidity pool and building your community/project next.</li>
+                            <li>You may open another browser tab to manage both wallets simultaneously.</li>
+                            <li>If minting fails, save the receiver wallet, recover your XRP, and try again.</li>
+							<li>BE SURE TO LET QUEUE FULLY FINISH, ENCRYPT AND DOWNLOAD SECOND WALLET, LOAD MINTED WALLET INTO MAD LAB, USE BOTH AS NORMAL TO CONTROL ASSET</li>
+							<li>NORMAL USE IS: MINT ACCOUNT CONTROLS ADMIN COMMANDS/RECV ACCOUNT HANDLES DEPLOYMENTS - MANAGE ASSET FROM CLEAN BROWSER/COMPUTER</li>
+                        </ol>
+                        Carefully populate the fields below (Currency Code and Amount). Inspect your inputs, then click the appropriate mint button ONCE and WAIT!
+                    </p>
+                </div>
+                <div id="minting-receiver-warning" class="wallet-warning" style="display: none;"></div>
+                <div class="input-group">
+                    <label for="mint-currency">Currency Code (e.g., GRIND, METAL):</label>
+                    <input type="text" id="mint-currency" placeholder="Enter currency code">
+                </div>
+                <div class="input-group">
+                    <label for="mint-amount">Amount to Mint (Max 999,999,999,999,999):</label>
+                    <input type="number" id="mint-amount" placeholder="e.g., 1000000" min="1" max="999999999999999">
+                </div>
+                <div class="button-group minting-buttons">
+                    <button class="red-black-btn" onclick="prepareMint('standard')">Mint Token</button>
+                    <button class="red-black-btn" onclick="prepareMint('clawback')">Mint with Clawback</button>
+                </div>
+                <div id="mint-confirmation" class="mint-confirmation" style="display: none;">
+                    <p id="mint-confirm-message" class="mint-confirm-message"></p>
+                    <div class="button-group minting-confirm-buttons">
+                        <button class="green-btn" id="confirmMint">Confirm</button>
+                        <button class="red-black-btn" id="cancelMint" onclick="cancelMint()">Cancel</button>
+                    </div>
+                </div>
+                <p id="address-error-minting" class="error-message"></p>
+                <div id="minting-queue" class="transaction-queue">
+                    <p>Transaction Queue:</p>
+                    <p>No transactions in queue.</p>
+                </div>
+            </div>
+        </div>
 
-				<div class="section minimized" id="minting">
-			<div class="section-header" onclick="toggleSection('minting')">
-				<h2>Mint New Token</h2>
-				<button class="toggle-btn">▼</button>
-			</div>
-			<div class="section-content">
-				<div class="section-description">
-					<h3 style="color: #00cc00;">Minting Overview</h3>
-					<p>Create a new fungible token using your loaded wallet as the issuer. 
-					<p>This process will do all of the following, let it cook! do not disrupt it while it is doing complicated things:
-						<ol>
-							<li>Create a receiver account to hold the minted tokens.</li>
-							<li>Fund it with 10 XRP to activate it. The 10 XRP will come from the issuer/account you are logged into right now.</li>
-							<li>Allow you to download the receiver account's seed and address (save these securely).</li>
-							<li>Set a trustline from the receiver to your wallet for the new token.</li>
-							<li>Mint the token and send it to the receiver account.</li>
-							<li>While Mad Lab is cooking the mixes for you, you should sit and stare at the screen and think of how cool it is. After it is done, download your new encrypted wallet!</li>
-							<li>The new wallet, has the token, this is your main account for using the token/deploying it while the issuer account is the one you are currently on.</li>
-							<li>The next things you will want to do is consider setting up a liquidity pool and starting to build community/work on your project.</li>
-							<li>You may open another browser tab and go to the mad lab on it - have both wallets open at the same time if you like.</li>
-							<li>If anything fails with the minting, be sure to save the second wallet - send back your XRP and attempt things again.</li>
-						</ol>
-						Be sure to carefully!! Populate the fields, there are only two. After that, inspect it, then you may click mint and WAIT. Only click mint ONCE!
-					</p>
-				</div>
-				<div id="minting-receiver-warning" class="wallet-warning" style="display: none;"></div>
-				<div class="input-group">
-					<label for="mint-currency">Currency Code (e.g., GRIND, METAL):</label>
-					<input type="text" id="mint-currency" placeholder="Enter currency code">
-				</div>
-				<div class="input-group">
-					<label for="mint-amount">Amount to Mint (Max 999,999,999,999,999):</label>
-					<input type="number" id="mint-amount" placeholder="e.g., 1000000" min="1" max="999999999999999">
-				</div>
-				<div class="button-group">
-					<button class="red-black-btn" onclick="queueMintToken()">Mint Token</button>
-				</div>
-				<p id="address-error-minting" class="error-message"></p>
-				<div id="minting-queue" class="transaction-queue">
-					<p>Transaction Queue:</p>
-					<p>No transactions in queue.</p>
-				</div>
-			</div>
-		</div>
+        <div id="adminConfirmationModal" class="password-modal-overlay" style="display: none;">
+            <div class="password-modal-content">
+                <p id="admin-confirm-content"></p>
+                <div class="input-group">
+                    <input type="checkbox" id="admin-confirm-checkbox">
+                    <label for="admin-confirm-checkbox">I understand this action and wish to proceed</label>
+                </div>
+                <div class="modal-buttons">
+                    <button class="green-btn" id="admin-confirm-btn" disabled>Confirm</button>
+                    <button class="red-black-btn" id="admin-cancel-btn">Cancel</button>
+                </div>
+            </div>
+        </div>
 
-			<div id="mintConfirmationModal" class="password-modal-overlay">
-				<div class="password-modal-content">
-				<h2>Confirm Minting</h2>
-				<p>Please confirm the details for minting your new token:</p>
-				<p><strong>Currency Code:</strong> <span id="confirm-currency"></span></p>
-				<p><strong>Amount to Mint:</strong> <span id="confirm-amount"></span></p>
-				<p style="color: #ffaa00; font-weight: bold;">
-					The Mad Lab will now take over. Please sit back and wait for the process to complete.
-				</p>
-				<div class="modal-buttons">
-					<button class="green-btn" id="confirmMint">Confirm</button>
-					<button class="red-black-btn" id="cancelMint">Cancel</button>
-				</div>
-				</div>
-			</div>
+        <div class="section minimized" id="admin-tools">
+            <div class="section-header" onclick="toggleSection('admin-tools')">
+                <h2>Token Admin Tools</h2>
+                <button class="toggle-btn">▼</button>
+            </div>
+            <div class="section-content">
+                <div class="section-description">
+                    <h3 style="color: #00cc00;">Admin Tools Overview</h3>
+                    <p>Manage your XRPL account and issued tokens. Tools are divided into three groups:</p>
+                    <ul style="font-size: 0.7rem; color: #ccc; text-align: left;">
+                        <li><strong>Pre-Minting Tools</strong>: Must be set before minting tokens, as they require an empty account (no trustlines, escrows, etc.).</li>
+                        <li><strong>Toggleable Tools</strong>: Can be used at any time to control XRP payments or rippling.</li>
+                        <li><strong>Issuer Tools</strong>: Require issued tokens (trustlines) and are used to manage token issuance and account state.</li>
+                    </ul>
+                    <p style="color: #ffaa00; font-weight: bold;">WARNING: Some actions are irreversible (e.g., NoFreeze, Clawback, Blackhole). Always verify settings on <a href="https://xrpscan.com" target="_blank">XRPSCAN</a>.</p>
+                </div>
 
-	</div>
+                <h3>Pre-Minting Tools</h3>
+                <p class="instruction-text">Configure these settings before minting tokens, as they cannot be set once trustlines or other objects exist.</p>
+                <button class="red-black-btn" id="admin-nofreeze-btn">Set NoFreeze</button>
+                <button class="red-black-btn" id="admin-enable-clawback-btn">Enable Clawback</button>
+                <p style="color: #ff4444; font-size: 0.7rem;">
+                    Note: NoFreeze and Clawback are permanent once set. Ledger rules, you may only have one set, not both.
+                </p>
+                <hr class="section-divider">
+
+                <div class="section-header">Toggleable Tools</div>
+                <div class="section-content">
+                    <p>These settings can be applied at any time to control XRP payments or rippling on trustlines.</p>
+                    <div class="input-group">
+                        <h4>Rippling and XRP Payments Settings</h4>
+                        <label for="admin-ripple-currency">Currency Code</label>
+                        <input type="text" id="admin-ripple-currency" placeholder="e.g., GGG">
+                        <label for="admin-ripple-target">Counterparty Address</label>
+                        <input type="text" id="admin-ripple-target" placeholder="r...">
+                        <button class="green-btn" id="admin-ripple-btn">Enable Rippling</button>
+                        <button class="red-black-btn" id="admin-no-ripple-btn">Disable Rippling</button>
+                        <button class="green-btn" id="admin-enable-xrp-btn">Enable XRP Payments</button>
+                        <button class="red-black-btn" id="admin-disable-xrp-btn">Disable XRP Payments</button>
+                    </div>
+                    <p><strong>Note:</strong> Rippling settings require an existing trustline. Verify the trustline state on XRPSCAN before enabling or disabling rippling. XRP Payments controls direct XRP transfers.</p>
+                </div>
+
+                <h3>Issuer Tools</h3>
+                <p class="instruction-text">These tools require issued tokens (trustlines) and are used to manage token issuance and account state.</p>
+                <div class="input-group">
+                    <label for="admin-mint-currency">Mint Currency Code (3-character ticker or hex code)</label>
+                    <input type="text" id="admin-mint-currency" placeholder="GGG or 4747470000000000000000000000000000000000">
+                </div>
+                <div class="input-group">
+                    <label for="admin-mint-amount">Amount</label>
+                    <input type="number" id="admin-mint-amount" placeholder="e.g., 1000">
+                </div>
+                <div class="input-group">
+                    <label for="admin-mint-target">Target Address (Must have trustline)</label>
+                    <input type="text" id="admin-mint-target" placeholder="Address to receive tokens">
+                </div>
+                <button class="red-black-btn" id="admin-mint-btn">Mint Tokens</button>
+                <hr class="section-divider">
+                <div class="input-group">
+                    <label for="admin-freeze-currency">Freeze/Unfreeze Currency Code</label>
+                    <input type="text" id="admin-freeze-currency" placeholder="Enter currency code">
+                    <p class="error-message" style="color: #ff4444; font-size: 0.7rem;">
+                        XRPSCAN may take 5-10 minutes to reflect freeze state changes.
+                    </p>
+                </div>
+                <div class="input-group">
+                    <label for="admin-freeze-target">Counterparty Address</label>
+                    <input type="text" id="admin-freeze-target" placeholder="Enter counterparty address">
+                </div>
+                <button class="red-black-btn" id="admin-freeze-btn">Freeze Trustline</button>
+                <button class="red-black-btn" id="admin-unfreeze-btn">Unfreeze Trustline</button>
+                <hr class="section-divider">
+                <div class="input-group">
+                    <label for="admin-clawback-currency">Clawback Currency Code</label>
+                    <input type="text" id="admin-clawback-currency" placeholder="Enter currency code">
+                    <p class="error-message" id="admin-clawback-error"></p>
+                    <label for="admin-clawback-target">Counterparty Address</label>
+                    <input type="text" id="admin-clawback-target" placeholder="Enter counterparty address">
+                    <label for="admin-clawback-amount">Amount</label>
+                    <input type="text" id="admin-clawback-amount" placeholder="Enter amount to claw back">
+                    <button class="red-black-btn" id="admin-clawback-btn">Clawback Tokens</button>
+                </div>
+                <hr class="section-divider">
+                <button class="red-black-btn" id="admin-global-freeze-btn">Global Freeze</button>
+                <button class="red-black-btn" id="admin-global-unfreeze-btn">Global Unfreeze</button>
+                <hr class="section-divider">
+                <h3>Blackhole Account</h3>
+                <button class="red-black-btn" id="admin-blackhole-btn">Blackhole Account</button>
+                <p style="color: #ff4444; font-size: 0.7rem;">
+                    WARNING: Blackholing permanently disables the account. Ensure minimal XRP remains. Have .1 XRP in the account to ensure all needed transactions complete, give proper time for mad lab to cook this all and ensure process is complete via xrpscan.com before closing mad lab off from the account.
+                </p>
+                <hr class="section-divider">
+                <button class="red-black-btn" id="admin-check-xrpscan-btn">Check XRPSCAN</button>
+                <p id="address-error-admin" class="error-message"></p>
+                <div id="admin-queue" class="transaction-queue"></div>
+            </div>
+        </div>
+
         <footer class="footer">
             <p>By using this page, you confirm reading the disclaimer at <a href="index.html">index.html</a>. If not, please do so for safe usage.</p>
+			
+			<a href="https://www.freecounterstat.com" title="web counter code"><img src="https://counter4.optistats.ovh/private/freecounterstat.php?c=uztwrewy8g6gpuk7yw96uxhfmxjchmut" border="0" title="web counter code" alt="web counter code"></a>			
+			
         </footer>
     </div>
-	
+
     <script src="script.js?v=5"></script>
-	<script src="extendedscripts.js?v=5"></script>
-	<script src="lp.js"></script>
-	<script src="escrow.js"></script>
-	<script src="minting.js"></script>
+    <script src="extendedscripts.js?v=5"></script>
+    <script src="lp.js"></script>
+    <script src="escrow.js"></script>
+    <script src="minting.js"></script>
+    <script src="admin.js"></script>
+	<script src="guardian.js"></script>
 </body>
 </html>

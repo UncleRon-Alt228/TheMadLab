@@ -30,7 +30,7 @@ async function processRequestQueue() {
         try {
             const result = await fn();
             resolve(result);
-            await new Promise(resolve => setTimeout(resolve, 1000)); // 1000ms delay (1 request/second)
+            await new Promise(resolve => setTimeout(resolve, 1000)); 
         } catch (error) {
             reject(error);
         }
@@ -48,7 +48,7 @@ function debounce(func, wait) {
 }
 
 async function checkLPPool() {
-    log('checkLPPool() triggered');
+    log('Checking pool...');
     const lpInfo = document.getElementById('lp-info');
     if (!lpInfo) {
         log('Error: #lp-info not found');
@@ -73,8 +73,15 @@ async function checkLPPool() {
         }
 
         await ensureConnected();
-        const asset1 = document.getElementById('lp-asset1').value;
-        const asset2 = document.getElementById('lp-asset2').value;
+        const asset1Display = document.getElementById('lp-asset1-display');
+        const asset2Display = document.getElementById('lp-asset2-display');
+        if (!asset1Display || !asset2Display) {
+            log('Error: LP asset display elements not found');
+            lpInfo.innerHTML = '<p>Pool Status: Asset selection missing</p>';
+            return;
+        }
+        const asset1 = asset1Display.getAttribute('data-value') || asset1Display.textContent;
+        const asset2 = asset2Display.getAttribute('data-value') || asset2Display.textContent;
         if (!asset1 || !asset2) {
             log('Error: Asset dropdowns not populated');
             lpInfo.innerHTML = '<p>Pool Status: Asset selection missing</p>';
@@ -89,7 +96,6 @@ async function checkLPPool() {
             return;
         }
 
-        log(`Checking pool for ${asset1}/${asset2}`);
         const ammInfo = await throttleRequest(() => client.request({
             command: "amm_info",
             asset: asset1 === "XRP" ? { currency: "XRP" } : { currency: asset1Data.hex, issuer: asset1Data.issuer },
@@ -107,7 +113,6 @@ async function checkLPPool() {
         const poolXrpDrops = parseFloat(ammInfo.result.amm.amount);
         poolReserve1 = asset1 === "XRP" ? parseFloat(xrpl.dropsToXrp(poolXrpDrops)) : parseFloat(ammInfo.result.amm.amount?.value || "0");
         poolReserve2 = asset2 === "XRP" ? parseFloat(xrpl.dropsToXrp(parseFloat(ammInfo.result.amm.amount2))) : parseFloat(ammInfo.result.amm.amount2?.value || "0");
-        log(`Pool reserves calculated: poolReserve1=${poolReserve1} (${asset1}), poolReserve2=${poolReserve2} (${asset2})`);
 
         lpTokenIssuer = ammInfo.result.amm.account;
         lpTokenCurrency = ammInfo.result.amm.lptoken?.currency || "";
@@ -115,12 +120,10 @@ async function checkLPPool() {
         let lpTokenData = globalLPTokens.find(token => token.lpName === expectedLPName && token.issuer === lpTokenIssuer);
 
         if (!lpTokenData) {
-            log(`LP token not found in globalLPTokens for pair ${asset1}/${asset2} with issuer ${lpTokenIssuer} - assuming balance is 0`);
             userLPBalance = 0;
         } else {
             lpTokenCurrency = lpTokenData.currency;
             userLPBalance = lpTokenData.balance || 0;
-            log(`Fetched LP balance from globalLPTokens: ${userLPBalance} for currency=${lpTokenCurrency}, issuer=${lpTokenIssuer}`);
         }
 
         const ammTrustlines = await throttleRequest(() => client.request({
@@ -139,7 +142,6 @@ async function checkLPPool() {
         const xrpBalance = parseFloat(xrpl.dropsToXrp(accountInfo.result.account_data.Balance));
         const now = Date.now();
         if (!cachedAccountLines || (now - lastAccountLinesFetch) > 60000) {
-            log('Fetching account_lines for user balances...');
             cachedAccountLines = await throttleRequest(() => client.request({
                 command: "account_lines",
                 account: address,
@@ -150,14 +152,12 @@ async function checkLPPool() {
         userBalance1 = asset1 === "XRP" ? xrpBalance : (cachedAccountLines.result.lines.find(line => line.currency === asset1Data?.hex)?.balance || "0");
         userBalance2 = asset2 === "XRP" ? xrpBalance : (cachedAccountLines.result.lines.find(line => line.currency === asset2Data?.hex)?.balance || "0");
         poolPrice = poolReserve2 / poolReserve1 || 0;
-        log(`User balances: userBalance1=${userBalance1} (${asset1}), userBalance2=${userBalance2} (${asset2}), poolPrice=${poolPrice}`);
 
         isPoolDataLoaded = true;
 
         const tradingFeeBasisPoints = ammInfo.result.amm.trading_fee || 0;
         const tradingFeePercent = (tradingFeeBasisPoints / 1000).toFixed(3);
 
-        log('Setting lpInfo.innerHTML...');
         lpInfo.innerHTML = `
             <p>Pool Status: Active</p>
             <p>Your LP Tokens: ${formatBalance(userLPBalance)}</p>
@@ -165,14 +165,13 @@ async function checkLPPool() {
             <p>Pool Price: 1 ${asset1} = ${(poolPrice || 0).toFixed(6)} ${asset2}, 1 ${asset2} = ${(1 / poolPrice || 0).toFixed(6)} ${asset1}</p>
             <p>Pool Fee: ${tradingFeePercent}%</p>
         `;
-        log('lpInfo.innerHTML set to:', lpInfo.innerHTML);
+        log(`Checked pool: ${asset1}/${asset2}, LP tokens: ${formatBalance(userLPBalance)}`, true);
 
-        log(`Pool checked successfully: ${asset1}/${asset2} - LP: ${userLPBalance}`);
         updateDepositSlider('asset1', 'deposit');
         updateWithdrawSlider();
         updateVoteFeeSlider();
     } catch (error) {
-        log(`checkLPPool error: ${error.message}`);
+        log(`Error checking pool: ${error.message}`);
         lpInfo.innerHTML = `<p>Pool Status: ${error.message.includes("ammNotFound") ? "Not Created" : "Error"}</p>`;
         isPoolDataLoaded = false;
     }
@@ -186,12 +185,33 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const initLP = function() {
         if (!hasInitializedLP && !lpSection.classList.contains('minimized')) {
-            
             populateAssetDropdowns();
             setupLPSliders();
-            document.getElementById('lp-asset1').addEventListener('change', updateLPAssetPair);
-            document.getElementById('lp-asset2').addEventListener('change', updateLPAssetPair);
-            document.querySelector('.lp-asset-selection .red-black-btn').addEventListener('click', debouncedCheckLPPool);
+            
+            const lpAsset1Trigger = document.querySelector('#lp-asset1-dropdown .dropdown-trigger');
+            const lpAsset2Trigger = document.querySelector('#lp-asset2-dropdown .dropdown-trigger');
+            if (lpAsset1Trigger) {
+                lpAsset1Trigger.addEventListener('click', () => {
+                    setTimeout(() => {
+                        if (document.getElementById('lp-asset1-panel').style.display === 'block') {
+                            updateLPAssetPair();
+                        }
+                    }, 100);
+                });
+            }
+            if (lpAsset2Trigger) {
+                lpAsset2Trigger.addEventListener('click', () => {
+                    setTimeout(() => {
+                        if (document.getElementById('lp-asset2-panel').style.display === 'block') {
+                            updateLPAssetPair();
+                        }
+                    }, 100);
+                });
+            }
+            const checkPoolButton = document.querySelector('.lp-asset-selection .red-black-btn');
+            if (checkPoolButton) {
+                checkPoolButton.addEventListener('click', debouncedCheckLPPool);
+            }
             hasInitializedLP = true;
         }
     };
@@ -199,48 +219,6 @@ document.addEventListener('DOMContentLoaded', function() {
     lpSection.querySelector('.section-header').addEventListener('click', initLP);
     document.querySelector('a[href="#amm-swap"]').addEventListener('click', initLP);
 });
-
-document.addEventListener('DOMContentLoaded', function() {
-    const lpSection = document.getElementById('amm-swap');
-    let hasInitializedLP = false;
-
-    const initLP = function() {
-        if (!hasInitializedLP && !lpSection.classList.contains('minimized')) {
-            
-            populateAssetDropdowns();
-            setupLPSliders();
-            document.getElementById('lp-asset1').addEventListener('change', updateLPAssetPair);
-            document.getElementById('lp-asset2').addEventListener('change', updateLPAssetPair);
-            document.querySelector('.lp-asset-selection .red-black-btn').addEventListener('click', debouncedCheckLPPool);
-            hasInitializedLP = true;
-        }
-    };
-
-    lpSection.querySelector('.section-header').addEventListener('click', initLP);
-    document.querySelector('a[href="#amm-swap"]').addEventListener('click', initLP);
-});
-
-document.addEventListener('DOMContentLoaded', function() {
-    const lpSection = document.getElementById('amm-swap');
-    let hasInitializedLP = false;
-
-    const initLP = function() {
-        if (!hasInitializedLP && !lpSection.classList.contains('minimized')) {
-            
-            populateAssetDropdowns();
-            setupLPSliders();
-            document.getElementById('lp-asset1').addEventListener('change', updateLPAssetPair);
-            document.getElementById('lp-asset2').addEventListener('change', updateLPAssetPair);
-            document.querySelector('.lp-asset-selection .red-black-btn').addEventListener('click', debouncedCheckLPPool);
-            hasInitializedLP = true;
-        }
-    };
-
-    lpSection.querySelector('.section-header').addEventListener('click', initLP);
-    document.querySelector('a[href="#amm-swap"]').addEventListener('click', initLP);
-});
-
-
 
 function toggleLPSection(sectionId) {
     const section = document.getElementById(sectionId);
@@ -250,46 +228,60 @@ function toggleLPSection(sectionId) {
 }
 
 function updateLPAssetPair() {
-    const asset1Select = document.getElementById('lp-asset1');
-    const asset2Select = document.getElementById('lp-asset2');
-    if (asset1Select.value === asset2Select.value) {
-        const availableAssets = ['XRP', ...prefabAssets.map(a => a.name), ...dynamicAssets.map(a => a.name)];
-        asset2Select.value = availableAssets.find(a => a !== asset1Select.value) || 'XRP';
-    }
-    checkLPPool();
-}
+    const asset1Display = document.getElementById('lp-asset1-display');
+    const asset2Display = document.getElementById('lp-asset2-display');
+    const lpInfo = document.getElementById('lp-info');
+    const errorElement = document.getElementById('address-error-lp');
 
-function populateLPAssetDropdowns() {
-    const asset1Select = document.getElementById('lp-asset1');
-    const asset2Select = document.getElementById('lp-asset2');
-    if (!asset1Select || !asset2Select) {
-        log('Error: LP asset dropdowns not found in DOM.');
+    if (!asset1Display || !asset2Display || !lpInfo || !errorElement) {
+        log('Error: Liquidity pool asset display elements or info not found in DOM.');
         return;
     }
 
-    const currentAsset1 = asset1Select.value || "XRP";
-    const currentAsset2 = asset2Select.value || (prefabAssets.length > 0 ? prefabAssets[0].name : "XRP");
+    const asset1 = asset1Display.getAttribute('data-value') || asset1Display.textContent;
+    const asset2 = asset2Display.getAttribute('data-value') || asset2Display.textContent;
 
-    const combinedAssets = [...prefabAssets, ...dynamicAssets.filter(da => !prefabAssets.some(pa => pa.hex === da.hex))];
-    combinedAssets.sort((a, b) => a.name.localeCompare(b.name));
+    if (asset1 && asset2 && asset1 === asset2) {
+        const availableAssets = ['XRP', ...prefabAssets.map(a => a.name)].filter(a => a !== asset1);
+        const otherAsset = availableAssets[0] || 'XRP';
+        asset2Display.textContent = otherAsset;
+        asset2Display.setAttribute('data-value', otherAsset);
+        log(`Adjusted Asset 2 to ${otherAsset} to avoid duplicate selection.`);
+    }
 
-    asset1Select.innerHTML = asset2Select.innerHTML = '';
-    const xrpOption = document.createElement('option');
-    xrpOption.value = "XRP";
-    xrpOption.textContent = "XRP";
-    asset1Select.appendChild(xrpOption.cloneNode(true));
-    asset2Select.appendChild(xrpOption.cloneNode(true));
+    lpInfo.innerHTML = `
+        <p>Pool Status: Select assets and click "Check Pool"</p>
+        <p>Your LP Tokens: -</p>
+        <p>Pool Assets: ${asset1 || '-'} / ${asset2 || '-'}</p>
+        <p>Trading Fee: -</p>
+    `;
 
-    combinedAssets.forEach(asset => {
-        const option = document.createElement('option');
-        option.value = asset.name;
-        option.textContent = asset.name;
-        asset1Select.appendChild(option.cloneNode(true));
-        asset2Select.appendChild(option.cloneNode(true));
-    });
+    errorElement.textContent = '';
 
-    asset1Select.value = combinedAssets.some(a => a.name === currentAsset1) || currentAsset1 === "XRP" ? currentAsset1 : "XRP";
-    asset2Select.value = combinedAssets.some(a => a.name === currentAsset2) || currentAsset2 === "XRP" ? currentAsset2 : (combinedAssets.length > 0 ? combinedAssets[0].name : "XRP");
+    const amount1Input = document.getElementById('lp-amount1-deposit');
+    const amount2Input = document.getElementById('lp-amount2-deposit');
+    const withdrawInput = document.getElementById('lp-amount-withdraw');
+    const slider1 = document.getElementById('lp-amount1-slider-deposit');
+    const slider2 = document.getElementById('lp-amount2-slider-deposit');
+    const withdrawSlider = document.getElementById('lp-withdraw-slider');
+
+    if (amount1Input) amount1Input.value = '';
+    if (amount2Input) amount2Input.value = '';
+    if (withdrawInput) withdrawInput.value = '';
+    if (slider1) {
+        slider1.value = 0;
+        document.getElementById('lp-amount1-percentage-deposit').textContent = '0%';
+    }
+    if (slider2) {
+        slider2.value = 0;
+        document.getElementById('lp-amount2-percentage-deposit').textContent = '0%';
+    }
+    if (withdrawSlider) {
+        withdrawSlider.value = 0;
+        document.getElementById('lp-withdraw-percentage').textContent = '0%';
+    }
+
+    log(`Liquidity pool assets updated: ${asset1 || '-'} / ${asset2 || '-'}`);
 }
 
 function updateDepositSlider(asset, context) {
@@ -381,8 +373,10 @@ function updateWithdrawSlider() {
 
     let currentLPBalance = userLPBalance;
     if (!isPoolDataLoaded) {
-        const asset1 = document.getElementById('lp-asset1').value;
-        const asset2 = document.getElementById('lp-asset2').value;
+        const asset1Display = document.getElementById('lp-asset1-display');
+        const asset2Display = document.getElementById('lp-asset2-display');
+        const asset1 = asset1Display.getAttribute('data-value') || asset1Display.textContent;
+        const asset2 = asset2Display.getAttribute('data-value') || asset2Display.textContent;
         const expectedLPName = `${asset1}/${asset2} LP`;
         const lpTokenData = globalLPTokens.find(token => token.lpName === expectedLPName);
         currentLPBalance = lpTokenData ? lpTokenData.balance : 0;
@@ -390,7 +384,7 @@ function updateWithdrawSlider() {
     }
 
     if (!currentLPBalance || currentLPBalance <= 0) {
-        log('Error: No LP tokens available to withdraw.');
+        
         lpAmountInput.value = '';
         lpSlider.value = 0;
         lpPercentage.textContent = '0%';
@@ -404,6 +398,7 @@ function updateWithdrawSlider() {
     lpAmountInput.value = lpAmount.toFixed(6);
     lpPercentage.textContent = `${percentage.toFixed(2)}%`;
 }
+
 async function queueLPDeposit() {
     try {
         const address = globalAddress;
@@ -414,8 +409,15 @@ async function queueLPDeposit() {
             return;
         }
 
-        const asset1 = document.getElementById('lp-asset1').value;
-        const asset2 = document.getElementById('lp-asset2').value;
+        const asset1Display = document.getElementById('lp-asset1-display');
+        const asset2Display = document.getElementById('lp-asset2-display');
+        if (!asset1Display || !asset2Display) {
+            log('Error: LP asset display elements not found.');
+            errorElement.textContent = 'Asset selection missing.';
+            return;
+        }
+        const asset1 = asset1Display.getAttribute('data-value') || asset1Display.textContent;
+        const asset2 = asset2Display.getAttribute('data-value') || asset2Display.textContent;
         const amount1 = document.getElementById('lp-amount1-deposit').value.trim();
         const amount2 = document.getElementById('lp-amount2-deposit').value.trim();
 
@@ -473,8 +475,15 @@ async function queueLPWithdraw() {
             return;
         }
 
-        const asset1 = document.getElementById('lp-asset1').value;
-        const asset2 = document.getElementById('lp-asset2').value;
+        const asset1Display = document.getElementById('lp-asset1-display');
+        const asset2Display = document.getElementById('lp-asset2-display');
+        if (!asset1Display || !asset2Display) {
+            log('Error: LP asset display elements not found.');
+            errorElement.textContent = 'Asset selection missing.';
+            return;
+        }
+        const asset1 = asset1Display.getAttribute('data-value') || asset1Display.textContent;
+        const asset2 = asset2Display.getAttribute('data-value') || asset2Display.textContent;
         const lpSlider = document.getElementById('lp-withdraw-slider');
         const percentage = parseFloat(lpSlider.value);
 
@@ -546,6 +555,7 @@ async function queueLPWithdraw() {
         errorElement.textContent = `Error: ${error.message}`;
     }
 }
+
 async function queueLPVote() {
     try {
         const address = globalAddress;
@@ -556,8 +566,15 @@ async function queueLPVote() {
             return;
         }
 
-        const asset1 = document.getElementById('lp-asset1').value;
-        const asset2 = document.getElementById('lp-asset2').value;
+        const asset1Display = document.getElementById('lp-asset1-display');
+        const asset2Display = document.getElementById('lp-asset2-display');
+        if (!asset1Display || !asset2Display) {
+            log('Error: LP asset display elements not found.');
+            errorElement.textContent = 'Asset selection missing.';
+            return;
+        }
+        const asset1 = asset1Display.getAttribute('data-value') || asset1Display.textContent;
+        const asset2 = asset2Display.getAttribute('data-value') || asset2Display.textContent;
         const feeInput = document.getElementById('lp-vote-fee').value.trim();
         const feePercent = parseFloat(feeInput);
 
@@ -574,7 +591,6 @@ async function queueLPVote() {
         const asset2Data = asset2 === "XRP" ? { currency: "XRP" } : { currency: getAssetByName(asset2).hex, issuer: getAssetByName(asset2).issuer };
 
         const tradingFee = Math.round(feePercent * 1000);
-        log(`Calculated tradingFee: ${tradingFee}`);
         const tx = {
             TransactionType: "AMMVote",
             Account: address,
@@ -654,8 +670,8 @@ async function processLPTransactionQueue() {
         updateTransactionQueueDisplay();
 
         if (transactionQueue.length > 0) {
-            log('Waiting 15 seconds before next LP transaction...');
-            await new Promise(resolve => setTimeout(resolve, 15000));
+            log('Waiting 5 seconds before next LP transaction...');
+            await new Promise(resolve => setTimeout(resolve, 5000));
             await processLPTransactionQueue();
         } else {
             isProcessingQueue = false;
@@ -668,8 +684,8 @@ async function processLPTransactionQueue() {
         updateTransactionQueueDisplay();
 
         if (transactionQueue.length > 0) {
-            log('Waiting 15 seconds before next LP transaction...');
-            await new Promise(resolve => setTimeout(resolve, 15000));
+            log('Waiting 5 seconds before next LP transaction...');
+            await new Promise(resolve => setTimeout(resolve, 5000));
             await processLPTransactionQueue();
         } else {
             isProcessingQueue = false;
@@ -686,12 +702,12 @@ async function processAMMDeposit(txEntry) {
         prepared.LastLedgerSequence = ledgerInfo.result.ledger_current_index + 100;
         const signed = wallet.sign(prepared);
 
-        log(`Submitting AMMDeposit: ${description}`);
+        log(description);
+        log(`Blob: ${signed.tx_blob}`, true);
         const result = await client.submitAndWait(signed.tx_blob);
 
         if (result.result.meta.TransactionResult === "tesSUCCESS") {
-            log(`AMMDeposit succeeded: ${description}`);
-            log(`Transaction Hash: ${result.result.hash}`);
+            log(`Confirmation: ${result.result.hash}`, true);
             await checkBalance();
             await resecureCache();
             await checkLPPool();
@@ -709,6 +725,7 @@ async function processAMMDeposit(txEntry) {
         throw error;
     }
 }
+
 async function processAMMWithdraw(txEntry) {
     try {
         const { tx, wallet, description, asset1, asset2 } = txEntry;
@@ -717,7 +734,8 @@ async function processAMMWithdraw(txEntry) {
         prepared.LastLedgerSequence = ledgerInfo.result.ledger_current_index + 100;
         const signed = wallet.sign(prepared);
 
-        log(`Submitting AMMWithdraw: ${description}`);
+        log(description);
+        log(`Blob: ${signed.tx_blob}`, true); 
         const result = await client.submitAndWait(signed.tx_blob);
 
         if (result.result.meta.TransactionResult === "tesSUCCESS") {
@@ -743,8 +761,7 @@ async function processAMMWithdraw(txEntry) {
                 }
             }
 
-            log(`AMMWithdraw succeeded: ${description}`);
-            log(`Transaction Hash: ${result.result.hash}`);
+            log(`Confirmation: ${result.result.hash}`, true);
             log(`Withdrawn: ${formatBalance(withdrawnXrp)} XRP, ${formatBalance(withdrawnToken)} ${tokenAsset}`);
 
             const lpQueue = document.getElementById('lp-queue');
@@ -781,6 +798,7 @@ async function processAMMWithdraw(txEntry) {
         throw error;
     }
 }
+
 async function processAMMVote(txEntry) {
     try {
         const { tx, wallet, description } = txEntry;
@@ -789,12 +807,12 @@ async function processAMMVote(txEntry) {
         prepared.LastLedgerSequence = ledgerInfo.result.ledger_current_index + 100;
         const signed = wallet.sign(prepared);
 
-        log(`Submitting AMMVote: ${description}`);
+        log(description);
+        log(`Blob: ${signed.tx_blob}`, true); 
         const result = await client.submitAndWait(signed.tx_blob);
 
         if (result.result.meta.TransactionResult === "tesSUCCESS") {
-            log(`AMMVote succeeded: ${description}`);
-            log(`Transaction Hash: ${result.result.hash}`);
+            log(`Confirmation: ${result.result.hash}`, true);
             await resecureCache();
         } else {
             log(`AMMVote failed: ${result.result.meta.TransactionResult}`);
@@ -819,10 +837,8 @@ function setupLPSliders() {
         if (slider) {
             slider.removeAttribute('oninput');
             slider.addEventListener('input', debounce(fn, 100));
-            
         } else {
             log(`Error: Slider ${id} missing`);
         }
     });
 }
-;

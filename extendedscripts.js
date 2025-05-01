@@ -234,11 +234,6 @@ async function fetchNetworkStats() {
     }
 }
 
-
-
-
-
-
 async function deepDiveAccount() {
     try {
         
@@ -1758,7 +1753,7 @@ function preconfigureSignerEntries() {
     const signerEntriesString = validAddresses.map(addr => `${addr}:${weight}`).join(',');
 
     const totalWeight = validAddresses.length * weight;
-    const suggestedQuorum = Math.ceil(totalWeight / 2) + 1; // e.g., for 3 signers with weight 1 each, total = 3, quorum = 2
+    const suggestedQuorum = Math.ceil(totalWeight / 2) + 1; 
 
     preconfigureResult.innerHTML = `
         <strong>Generated Signer Entries:</strong> <code>${signerEntriesString}</code><br>
